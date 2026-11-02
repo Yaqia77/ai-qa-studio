@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 
 from backend.api.routers import api_defs, cases, scripts
+from backend.agent_bridge import router as agent_bridge
 from backend.app.routers import app_cases
 from backend.shared import audit_store, authz, config_writer, scheduler, user_store
 from backend.shared.routers import (audit, auth, dependencies, notifications,
@@ -53,6 +54,11 @@ app.include_router(secrets.router)
 app.include_router(ui_cases.router)
 app.include_router(ui_sessions.router)
 app.include_router(app_cases.router)
+
+# Agent 桥接（M2）：仅当 config.yaml 的 agent.enabled=true 才注册，
+# 缺省关闭 → 端点不进 /openapi.json，存量接口与页面行为零回归。
+if agent_bridge.agent_enabled():
+    app.include_router(agent_bridge.router)
 
 
 @app.middleware("http")
