@@ -58,7 +58,7 @@ function onUserCommand(cmd: string) {
         </el-menu-item-group>
         <el-menu-item-group title="测试管理">
           <el-menu-item index="/cases">📋 用例管理</el-menu-item>
-          <el-menu-item v-perm="'case:write'" index="/agent-gen">🤖 AI 生成</el-menu-item>
+          <el-menu-item v-perm="'case:write'" index="/agent-chat">🤖 AI 生成</el-menu-item>
           <el-menu-item index="/ui-sessions">🔐 登录态</el-menu-item>
           <el-menu-item v-perm="'api:manage'" index="/defs">📚 接口定义</el-menu-item>
           <el-menu-item index="/plans">📁 测试场景</el-menu-item>

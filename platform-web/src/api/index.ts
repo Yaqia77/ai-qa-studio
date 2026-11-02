@@ -1,7 +1,7 @@
 /** Axios 封装 + 接口函数（开发期经 Vite 代理 /api → FastAPI:8000）。 */
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import type { CaseItem, CasePage, CaseMeta, UiCaseItem, UiCasePage, UiCaseMeta, UiSession, UiSessionStatus, UiSessionCollectResult, UiSessionMeta, AppCaseItem, AppCasePage, AppCaseMeta, CaseHistoryResp, EnvsResp, EnvsUpdate, RunCasesResp, RunCaseDetail, RunItem, SecretsResp, PlanItem, PlanCreateReq, PlanUpdateReq, WebhookItem, WebhookCreateReq, WebhookUpdateReq, ScheduleItem, ScheduleCreateReq, ScheduleUpdateReq, LoginResp, UserInfo, UserCreateReq, UserUpdateReq, AuditItem, AuditLogsResp, PermMatrixResp, PermSaveResp, ScriptItem, ScriptCreateReq, ScriptUpdateReq, ScriptMeta, ApiDefItem, ApiDefCreateReq, ApiDefUpdateReq, ApiDefMeta, AggregateResult, OpenApiImportResult, SkeletonReq, SkeletonResult, ImportPreviewResp, ImportCaseDraft, Project, UiImportPreviewResp, GenerationReq, GenerationOut, AgentPreviewResp, AgentCommitResp, AgentCasesBody } from "../types";
+import type { CaseItem, CasePage, CaseMeta, UiCaseItem, UiCasePage, UiCaseMeta, UiSession, UiSessionStatus, UiSessionCollectResult, UiSessionMeta, AppCaseItem, AppCasePage, AppCaseMeta, CaseHistoryResp, EnvsResp, EnvsUpdate, RunCasesResp, RunCaseDetail, RunItem, SecretsResp, PlanItem, PlanCreateReq, PlanUpdateReq, WebhookItem, WebhookCreateReq, WebhookUpdateReq, ScheduleItem, ScheduleCreateReq, ScheduleUpdateReq, LoginResp, UserInfo, UserCreateReq, UserUpdateReq, AuditItem, AuditLogsResp, PermMatrixResp, PermSaveResp, ScriptItem, ScriptCreateReq, ScriptUpdateReq, ScriptMeta, ApiDefItem, ApiDefCreateReq, ApiDefUpdateReq, ApiDefMeta, AggregateResult, OpenApiImportResult, SkeletonReq, SkeletonResult, ImportPreviewResp, ImportCaseDraft, Project, UiImportPreviewResp, GenerationReq, GenerationOut, AgentPreviewResp, AgentCommitResp, AgentCasesBody, ChatSessionInfo, ChatSessionDetail } from "../types";
 import { clearToken, getToken } from "../utils/session";
 
 const http = axios.create({ baseURL: "/api", timeout: 30000 });
@@ -590,4 +590,14 @@ export const api = {
   /** 确认落库：整批先验后写，任一非法即全拒（后端 400 带 rejected 明细） */
   agentCommitCases: (body: AgentCasesBody) =>
     http.post<AgentCommitResp>("/agent/cases/commit", body).then((r) => r.data),
+
+  /* ---------- 对话式 AI 生成（二期）：会话历史在 Agent 侧，流式走 utils/sse 不走 axios ---------- */
+  agentChatSessions: () =>
+    agentHttp.get<{ items: ChatSessionInfo[] }>("/v1/chat/sessions").then((r) => r.data.items),
+
+  agentChatSession: (sid: string) =>
+    agentHttp.get<ChatSessionDetail>(`/v1/chat/sessions/${encodeURIComponent(sid)}`).then((r) => r.data),
+
+  agentChatDelete: (sid: string) =>
+    agentHttp.delete<{ id: string }>(`/v1/chat/sessions/${encodeURIComponent(sid)}`).then((r) => r.data),
 };

@@ -866,3 +866,81 @@ export interface AgentCasesBody {
   project_id?: string;
   file?: string;
 }
+
+/* ---------------- 对话式 AI 生成（二期 P1/P2） ----------------
+ * 协议真源在 qa-agent docs/protocol.md 第 7 节：事件类型闭集十个，改一边必须同步另一边。
+ */
+
+/** plan 事件节点：步骤画布的唯一数据源（序号/名称/输入输出映射/状态） */
+export interface ChatPlanStep {
+  seq: number;
+  case_id: string;
+  name: string;
+  kind: string;                     // api_case（一期只有用例节点）
+  method: string;
+  url: string;
+  inputs: string[];
+  outputs: string[];
+  status: "draft" | "registered";
+}
+
+/** case_ready 事件：单条草稿 + 校验结果 + 新旧对照 */
+export interface ChatCaseReady {
+  case: Record<string, unknown>;
+  validation: { case_id?: string; passed?: boolean; exists?: boolean; problems?: string[] };
+  diff: GenerationDiff;
+  citations: string[];
+}
+
+/** 对话一轮的入参（POST /v1/chat/stream） */
+export interface ChatReq {
+  session_id?: string;
+  message: string;
+  platform?: string;
+  project_id?: string;
+  target?: string;
+  mode?: "auto" | "generate" | "complete" | "expand";
+  count?: number;
+  auto_register?: "auto" | "ask" | "off";
+  patch?: { case_id: string; body: Record<string, unknown> } | null;
+  attachments?: { name: string; content: string }[];
+}
+
+/** SSE 事件判别联合：type 到 payload 的映射与后端 EVENT_TYPES 一一对应 */
+export type ChatEvent =
+  | { type: "token"; payload: { text: string } }
+  | { type: "plan"; payload: { steps: ChatPlanStep[] } }
+  | { type: "step_start"; payload: { seq: number; summary: string } }
+  | { type: "step_finish"; payload: { seq: number; ok: boolean; summary: string } }
+  | { type: "case_ready"; payload: ChatCaseReady }
+  | { type: "registered"; payload: { case_ids: string[]; file: string; count: number } }
+  | { type: "ask"; payload: { question: string; options?: string[] } }
+  | { type: "citation"; payload: { kb_id: string; title: string; source_uri: string } }
+  | { type: "error"; payload: { detail: string; code: string; trace_id: string } }
+  | { type: "done"; payload: { session_id: string; trace_id: string } };
+
+/** 会话列表项（GET /v1/chat/sessions） */
+export interface ChatSessionInfo {
+  id: string;
+  title: string;
+  platform: string;
+  project_id: string;
+  turns: number;
+  updated_at: string;
+}
+
+/** 会话详情（GET /v1/chat/sessions/{sid}）：刷新/换端后恢复对话与画布。
+ *  注意与列表项不同：这里 turns 是完整轮次数组（列表项里是条数）。 */
+export interface ChatSessionDetail {
+  id: string;
+  title: string;
+  platform: string;
+  project_id: string;
+  created_at: string;
+  updated_at: string;
+  turns: { role: string; content: string; intent: string; trace_id: string;
+           case_ids: string[]; registered: string[] }[];
+  plan: ChatPlanStep[];
+  drafts: Record<string, Record<string, unknown>>;
+  last_target: string;
+}
