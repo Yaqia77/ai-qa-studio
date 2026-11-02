@@ -16,13 +16,16 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 _DATA_FILE = ROOT / "data" / "users.json"
 _LOCK = threading.Lock()
 
-ROLES = ("admin", "tl", "qa", "dev", "viewer")
+ROLES = ("admin", "tl", "qa", "dev", "viewer", "agent_svc")
 ROLE_NAMES = {
     "admin": "管理员",
     "tl": "测试负责人",
     "qa": "测试工程师",
     "dev": "开发",
     "viewer": "只读访客",
+    # Agent 服务账号（设计文档 5.3）：只读靠登录态，唯一权限码 case:write；
+    # 不播种、由 tools/init_agent_svc.py 显式创建，密码绝不进仓
+    "agent_svc": "Agent 服务账号",
 }
 
 # 播种账号：生产部署后应立即改密（MVP 提示写在前端登录页）

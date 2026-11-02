@@ -390,19 +390,19 @@ cd platform-web ; npm run dev
 
 角色与权限矩阵（默认基线写在 `backend/perm_store.py`，可在「系统管理 → 角色权限」页勾选调整，自定义分配存 `data/permissions.json`）：
 
-| 权限码 | admin | tl | qa | dev | viewer |
-|---|---|---|---|---|---|
-| `case:write` 用例编辑/导入 | ✓ | ✓ | ✓ | | |
-| `case:delete` 用例删除 | ✓ | ✓ | | | |
-| `api:manage` 接口定义管理 | ✓ | ✓ | ✓ | | |
-| `script:manage` 公共脚本管理 | ✓ | ✓ | ✓ | | |
-| `plan:manage` 测试场景管理 | ✓ | ✓ | ✓ | | |
-| `run:create` 触发/取消执行 | ✓ | ✓ | ✓ | ✓ | |
-| `env:manage` / `secret:manage` / `webhook:manage` / `schedule:manage` | ✓ | ✓ | | | |
-| `report:delete` 报告删除与旧报告清理 | ✓ | ✓ | | | |
-| `audit:view` 操作审计查询/导出 | ✓ | ✓ | | | |
-| `audit:manage` 审计日志清理 | ✓ | | | | |
-| `user:manage` 用户管理 | ✓ | | | | |
+| 权限码 | admin | tl | qa | dev | viewer | agent_svc |
+|---|---|---|---|---|---|---|
+| `case:write` 用例编辑/导入 | ✓ | ✓ | ✓ | | | ✓ |
+| `case:delete` 用例删除 | ✓ | ✓ | | | | |
+| `api:manage` 接口定义管理 | ✓ | ✓ | ✓ | | | |
+| `script:manage` 公共脚本管理 | ✓ | ✓ | ✓ | | | |
+| `plan:manage` 测试场景管理 | ✓ | ✓ | ✓ | | | |
+| `run:create` 触发/取消执行 | ✓ | ✓ | ✓ | ✓ | | |
+| `env:manage` / `secret:manage` / `webhook:manage` / `schedule:manage` | ✓ | ✓ | | | | |
+| `report:delete` 报告删除与旧报告清理 | ✓ | ✓ | | | | |
+| `audit:view` 操作审计查询/导出 | ✓ | ✓ | | | | |
+| `audit:manage` 审计日志清理 | ✓ | | | | | |
+| `user:manage` 用户管理 | ✓ | | | | | |
 
 说明：
 
@@ -441,6 +441,12 @@ cd platform-web ; npm run dev
 - 统计报表页：跨运行的通过率/趋势与模块分布汇总（浅色统一风格），数据源于已归档的报告批次
 - 用例项目维度：「用例管理」页以**项目切换器**隔离不同被测系统（项目 = 一个 Excel 文件，详见上方「多项目隔离」）；
   左栏顶部切换项目、就地新建/重命名/删除（需 `case:write`/`case:delete`），选定后模块导航与用例读写仅作用于该项目文件
+- AI 生成（「测试管理 → AI 生成」，需 `case:write`）：对接独立 qa-agent 服务（另仓，设 `QA_AGENT_*` 环境变量后
+  8100 端口启动），“生成直连、落库过闸”两段式：浏览器经 `/agent` 代理直连 Agent 生成草稿（网关 Key 存
+  `localStorage.agent_key`），预览逐条展示校验与新旧对照，全部过检后确认才写回用例文件；
+  平台侧需 `config.yaml` 置 `agent.enabled=true`（缺省 false 零回归），服务账号用
+  `tools/init_agent_svc.py` 一次性创建（角色 `agent_svc`：只读 + `case:write`，随机密码只打印一次，
+  填入 qa-agent 启动环境变量 `QA_AGENT_PLATFORM_PASSWORD`，密码不落任何文件）
 
 ## 路线图
 
@@ -459,4 +465,5 @@ cd platform-web ; npm run dev
   - [x] v2 项目：用例项目维度（一个业务系统一个 Excel + 项目切换器，模块按项目隔离）
   - [x] v2 冒烟：全功能端到端冒烟脚本（smoke_full.py，项目/用例/导入/依赖/定时/执行主链路）
   - [x] v2 UI：UI 自动化（项目分型 api/ui + 可视化步骤编辑器 + Playwright 解释器 + 步骤轨迹/截图报告）
+  - [x] v2 Agent：AI 用例生成接入（独立 qa-agent 服务 + 知识库 + 校验闸门 + 「AI 生成」页，生成直连、落库过闸）
 - [ ] v1.1：CI 集成（Jenkinsfile / GitHub Actions）、失败通知模板扩充

@@ -41,7 +41,9 @@ CATALOG: dict[str, tuple[str, str]] = {
 
 # 代码基线：文件不存在时的默认矩阵，也是「恢复默认」的目标
 DEFAULT_MATRIX: dict[str, list[str]] = {
-    "case:write": ["admin", "tl", "qa"],
+    # agent_svc（Agent 服务账号）仅授予 case:write：读接口登录态即覆盖，
+    # 管理类权限一律不给（设计文档 5.3：只读 + 用例写入）
+    "case:write": ["admin", "tl", "qa", "agent_svc"],
     "case:delete": ["admin", "tl"],
     "api:manage": ["admin", "tl", "qa"],
     "script:manage": ["admin", "tl", "qa"],

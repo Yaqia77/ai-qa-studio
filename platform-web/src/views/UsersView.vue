@@ -19,6 +19,7 @@ const ROLE_OPTIONS = [
   { value: "qa", label: "测试工程师 QA" },
   { value: "dev", label: "开发 Dev" },
   { value: "viewer", label: "只读访客 Viewer" },
+  { value: "agent_svc", label: "Agent 服务账号" },
 ];
 const roleName = (r: string) => ROLE_OPTIONS.find((o) => o.value === r)?.label ?? r;
 
@@ -29,6 +30,7 @@ const ROLE_DESC: Record<string, string> = {
   qa: "主力：用例、场景、执行",
   dev: "开发：查看 + 触发执行",
   viewer: "只读访客：全站仅查看",
+  agent_svc: "qa-agent 服务账号：只读 + 用例写入，由 tools/init_agent_svc.py 创建",
 };
 
 const roleUserCount = computed(() => {

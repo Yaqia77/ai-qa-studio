@@ -166,8 +166,13 @@ function itemState(caseId: string): { passed: boolean; exists: boolean; problems
 
 function pretty(v: unknown): string {
   if (v === null || v === undefined || v === "" || (Array.isArray(v) && !v.length)
-      || (typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length)) return "—";
+      || (typeof v === "object" && !Array.isArray(v) && !Object.keys(v as object).length)) return "—";
   return typeof v === "string" ? v : JSON.stringify(v, null, 2);
+}
+
+/** complete/expand 的逐字段新旧对照（GenerationOut.diffs，设计 5.1/5.2⑤）；generate 无基准则为空 */
+function caseDiff(caseId: string): { field: string; from: unknown; to: unknown }[] {
+  return (result.value?.diffs ?? []).find((d) => d.case_id === caseId)?.changed ?? [];
 }
 
 const allPlatformPassed = computed(() =>
@@ -298,6 +303,21 @@ const allPlatformPassed = computed(() =>
               <pre style="margin: 0">{{ pretty(c.asserts) }}</pre>
             </el-descriptions-item>
           </el-descriptions>
+          <!-- 补全/扩展逐字段对照：模型真正改了什么一目了然，未提及字段沿用原值不刷红 -->
+          <template v-if="caseDiff(String(c.case_id)).length">
+            <el-divider content-position="left" style="margin: 10px 0 6px">
+              <el-text size="small" type="info">与原用例对照（基准：{{ target }}，改 {{ caseDiff(String(c.case_id)).length }} 处）</el-text>
+            </el-divider>
+            <el-table :data="caseDiff(String(c.case_id))" size="small" border>
+              <el-table-column prop="field" label="字段" width="110" />
+              <el-table-column label="原值" min-width="200">
+                <template #default="{ row }"><pre style="margin: 0; white-space: pre-wrap">{{ pretty(row.from) }}</pre></template>
+              </el-table-column>
+              <el-table-column label="新值（草稿）" min-width="200">
+                <template #default="{ row }"><pre style="margin: 0; white-space: pre-wrap; color: #e6a23c">{{ pretty(row.to) }}</pre></template>
+              </el-table-column>
+            </el-table>
+          </template>
           <div v-if="itemState(String(c.case_id)).problems.length" style="margin-top: 8px">
             <el-text type="danger" size="small">
               问题：{{ itemState(String(c.case_id)).problems.join('；') }}

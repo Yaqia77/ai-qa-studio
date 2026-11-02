@@ -46,7 +46,8 @@ log:
 
 # Agent 桥接（M2：知识库语料只读导出）。缺省 enabled=false，
 # 关闭时 /api/agent/* 端点不注册，存量接口与页面行为零回归；
-# 打开后平台仅暴露只读语料导出（GET /api/agent/corpus），写能力到 M3 随校验闸门再开。
+# 打开后暴露 /api/agent/*：只读语料导出 + 草稿校验预览（preview）+ 确认后落库（commit）。
+# 服务账号 agent_svc 用 tools/init_agent_svc.py 创建（只读 + case:write）。
 agent:
   enabled: false
   base_url: http://127.0.0.1:8000   # 平台自身地址，供语料 source_uri 回跳原文

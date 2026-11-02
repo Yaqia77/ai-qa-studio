@@ -813,12 +813,19 @@ export interface GenerationCitation {
   score?: number;
 }
 
+/** 单条草稿与参考用例的逐字段对照（complete/expand 才有，设计 5.1/5.2⑤） */
+export interface GenerationDiff {
+  case_id: string;
+  changed: { field: string; from: unknown; to: unknown }[];
+}
+
 /** POST /v1/generations 响应（qa-agent GenerationOut）；cases 列名对齐 Excel 用例表 */
 export interface GenerationOut {
   ok: boolean;
   mode: string;
   cases: Record<string, unknown>[];
   validation: GenerationValidation;
+  diffs?: GenerationDiff[];
   errors: string[];
   citations: GenerationCitation[];
   degraded: boolean;
