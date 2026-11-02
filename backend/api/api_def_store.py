@@ -241,9 +241,15 @@ def delete(name: str) -> None:
 
 
 def upsert_many(records: list, overwrite: bool) -> dict:
-    """批量落库（聚合/导入共用）：一次读一次写，端点冲突只跳过、绝不覆盖别人的定义。"""
+    """批量落库（聚合/导入共用）：一次读一次写，端点冲突只跳过、绝不覆盖别人的定义。
+
+    written_names 回带本次在接口库中有效登记的接口名（新建/覆盖/同名已存在都算，
+    被端点冲突拦截的不算）：Agent 文档一键生成据此逐接口生成用例。
+    新增键对旧调用方向后兼容（aggregate/import 响应都是 **stats 透传）。
+    """
     counts = {"created": 0, "updated": 0, "skipped": 0}
     conflicts: list[str] = []
+    written_names: list[str] = []
     with _LOCK:
         items = _read_raw()
         by_name = {str(i.get("name")): i for i in items}
@@ -260,14 +266,17 @@ def upsert_many(records: list, overwrite: bool) -> dict:
                 items.append(record)
                 by_name[record["name"]] = record
                 counts["created"] += 1
+                written_names.append(str(rec["name"]))
             elif overwrite:
                 exist.clear()
                 exist.update({**rec, "updated_at": _now()})
                 counts["updated"] += 1
+                written_names.append(str(rec["name"]))
             else:
                 counts["skipped"] += 1
+                written_names.append(str(rec["name"]))   # 同名定义已在库中，同样可用于生成用例
         _write_raw(items)
-    return {**counts, "conflicts": conflicts}
+    return {**counts, "conflicts": conflicts, "written_names": written_names}
 
 
 # ==================== 存量用例 → 接口定义（设计文档 2.2「接口库沉淀」） ====================

@@ -9,7 +9,7 @@
  * 会话历史唯一来源是 qa-agent（GET /v1/chat/sessions*），本地不做第二存储。
  */
 import { nextTick, onMounted, ref, watch } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage, ElMessageBox, type UploadFile } from "element-plus";
 import { api } from "../api";
 import { postChatStream } from "../utils/sse";
 import StepCanvas from "../components/StepCanvas.vue";
@@ -38,6 +38,8 @@ interface ChatMsg {
   detail?: string;
   code?: string;
   traceId?: string;
+  // 用户气泡附带的附件名（仅展示用，历史恢复不重建）
+  files?: string[];
 }
 
 let msgSeq = 0;
@@ -49,6 +51,30 @@ const busy = ref(false);
 const input = ref("");
 const streamBox = ref<HTMLElement | null>(null);
 const activity = ref("");   // step_start/finish 的轻量进度条，不落消息流
+
+/* ---------------- 接口文档附件（P4：上传 → 本轮对话携带） ---------------- */
+const attachedFiles = ref<{ name: string; content: string }[]>([]);
+const MAX_ATTACH = 5;            // 与后端 doc_generate.MAX_ATTACHMENTS 同口径
+const MAX_ATTACH_BYTES = 2_000_000;  // 与后端单附件 2MB 上限同口径
+
+function onFilePick(uploadFile: UploadFile) {
+  const raw = uploadFile.raw;
+  if (!raw) return;
+  if (attachedFiles.value.length >= MAX_ATTACH) {
+    ElMessage.warning(`单轮最多 ${MAX_ATTACH} 份文档，请分批发送`); return;
+  }
+  if (raw.size > MAX_ATTACH_BYTES) {
+    ElMessage.warning(`「${raw.name}」超过 2MB 上限，请拆分后再传`); return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const content = String(reader.result ?? "");
+    if (!content.trim()) { ElMessage.warning(`「${raw.name}」内容为空`); return; }
+    attachedFiles.value = [...attachedFiles.value, { name: raw.name, content }];
+  };
+  reader.onerror = () => ElMessage.error(`读取「${raw.name}」失败`);
+  reader.readAsText(raw, "utf-8");
+}
 
 /* ---------------- 顶部：项目 / 落库模式 / Agent 状态 ---------------- */
 const projects = ref<Project[]>([]);
@@ -211,11 +237,14 @@ function onEvent(ev: ChatEvent) {
 
 /* ---------------- 发送 ---------------- */
 async function send(text?: string, patch?: { case_id: string; body: Record<string, unknown> }) {
-  const message = (text ?? input.value).trim();
-  if (!message) { ElMessage.info("请输入内容"); return; }
+  const files = attachedFiles.value;
+  const rawMsg = (text ?? input.value).trim();
+  // 只上传了文档没打字：补一句默认指令（后端 message 必填，路由靠 attachments 判 doc 分支）
+  const message = rawMsg || (files.length ? "请登记附件接口文档并生成用例" : "");
+  if (!message) { ElMessage.info("请输入内容或上传接口文档"); return; }
   if (busy.value) return;
-  messages.value.push({ id: ++msgSeq, role: "user", kind: "text", text: message });
-  if (!patch) input.value = "";
+  messages.value.push({ id: ++msgSeq, role: "user", kind: "text", text: message, files: files.map((f) => f.name) });
+  if (!patch) { input.value = ""; attachedFiles.value = []; }
   busy.value = true;
   activity.value = "已发送，等待 Agent 响应…";
   try {
@@ -227,6 +256,7 @@ async function send(text?: string, patch?: { case_id: string; body: Record<strin
         project_id: project.value?.id ?? "",
         auto_register: autoRegister.value,
         patch: patch ?? null,
+        attachments: patch ? undefined : (files.length ? files : undefined),
       },
       onEvent,
     );
@@ -273,6 +303,7 @@ onMounted(async () => {
     text: "你好！用自然语言描述要做什么即可，例如：\n" +
       "· 「给『统一相册列表(分页)』生成 5 条用例」\n" +
       "· 「基于 AL-01 补全断言」 · 「再扩展三条同风格的」\n" +
+      "· 也可以点「上传接口文档」（OpenAPI/Swagger/自由格式），一键登记接口并生成用例\n" +
       "产出会通过平台权威校验后自动写入用例管理（可在上方切换为仅草稿）。",
   });
 });
@@ -321,7 +352,12 @@ onMounted(async () => {
         <div ref="streamBox" class="stream">
           <div v-for="m in messages" :key="m.id" class="msg" :class="`msg--${m.role}`">
             <!-- 用户气泡 -->
-            <div v-if="m.role === 'user'" class="bubble bubble--user">{{ m.text }}</div>
+            <div v-if="m.role === 'user'" class="bubble bubble--user">
+              {{ m.text }}
+              <div v-if="m.files?.length" class="user-files">
+                <span v-for="(f, i) in m.files" :key="`${f}-${i}`">📄 {{ f }}</span>
+              </div>
+            </div>
 
             <!-- Agent 文本 -->
             <div v-else-if="m.kind === 'text'" class="bubble bubble--agent">
@@ -394,12 +430,22 @@ onMounted(async () => {
 
         <!-- 输入区 -->
         <div class="composer">
+          <div v-if="attachedFiles.length" class="attach-row">
+            <el-tag v-for="(f, i) in attachedFiles" :key="f.name + i" size="small" closable type="info"
+                    @close="attachedFiles.splice(i, 1)">📄 {{ f.name }}</el-tag>
+          </div>
           <el-input v-model="input" type="textarea" :rows="3" resize="none" :disabled="busy"
-                    placeholder="描述要生成的用例（回车发送，Shift+回车换行）；也可以直接点左侧画布节点手工修改"
+                    placeholder="描述要生成的用例（回车发送，Shift+回车换行）；也可上传接口文档一键生成，或直接点左侧画布节点手工修改"
                     @keydown.enter.exact.prevent="send()" />
           <div class="composer-actions">
-            <span class="tip">
-              {{ busy ? "流式响应中…" : `落库模式：${autoRegister === 'auto' ? '过检自动落库' : autoRegister === 'ask' ? '仅草稿（后端 ask）' : '关闭'}` }}
+            <span class="left-acts">
+              <el-upload :show-file-list="false" :auto-upload="false" :multiple="true"
+                         accept=".json,.yaml,.yml,.md,.txt" :on-change="onFilePick" action="#">
+                <el-button size="small" :disabled="busy">上传接口文档</el-button>
+              </el-upload>
+              <span class="tip">
+                {{ busy ? "流式响应中…" : `落库模式：${autoRegister === 'auto' ? '过检自动落库' : autoRegister === 'ask' ? '仅草稿（后端 ask）' : '关闭'}` }}
+              </span>
             </span>
             <el-button type="primary" :loading="busy" :disabled="agentOnline === false" @click="send()">
               发送
@@ -427,6 +473,8 @@ onMounted(async () => {
 .msg--agent { justify-content: flex-start; }
 .bubble { max-width: 82%; padding: 9px 12px; border-radius: 10px; font-size: 13px; line-height: 1.65; }
 .bubble--user { background: #ecf5ff; color: #2b6cb0; border: 1px solid #d9ecff; }
+.user-files { margin-top: 4px; font-size: 12px; opacity: 0.85; }
+.user-files span { display: block; }
 .bubble--agent { background: #fff; border: 1px solid #e4e7ed; color: #303133; }
 .cursor { animation: blink 1s infinite; color: #409eff; }
 @keyframes blink { 50% { opacity: 0; } }
@@ -455,6 +503,10 @@ onMounted(async () => {
 .err-bar .trace { color: #909399; margin-left: 8px; }
 .activity { padding: 4px 16px; font-size: 12px; color: #e6a23c; background: #fdf6ec; border-top: 1px solid #f5dab1; }
 .composer { border-top: 1px solid #e4e7ed; padding: 10px 14px; background: #fff; }
+.attach-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.attach-row .el-tag { cursor: default; }
 .composer-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.left-acts { display: flex; align-items: center; gap: 10px; }
+.left-acts :deep(.el-upload) { display: inline-block; }
 .composer-actions .tip { color: #909399; font-size: 12px; }
 </style>

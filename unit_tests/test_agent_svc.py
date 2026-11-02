@@ -2,9 +2,10 @@
 """agent_svc 服务账号单元测试（设计文档 5.3 授权行落地）。
 
 锁三件事：
-- 角色目录里有 agent_svc，且默认矩阵只授予 case:write——管理类权限一个都不给；
+- 角色目录里有 agent_svc，且默认矩阵只授予 case:write + api:manage（二期文档登记最小写面）
+  ——其余管理类权限一个都不给；
 - tools/init_agent_svc.py 幂等：重复执行不重建账号、不重置密码、矩阵不重复追加；
-- 权限落进 perm_store 后 permissions_of 只回 case:write（读操作靠登录态，无需权限码）。
+- 权限落进 perm_store 后 permissions_of 只回这两个写码（读操作靠登录态，无需权限码）。
 
 数据文件全部 monkeypatch 到 tmp_path，不碰真实 users.json / permissions.json。
     .venv/Scripts/python.exe -m pytest unit_tests/test_agent_svc.py -v
@@ -44,9 +45,9 @@ def test_role_catalog_has_agent_svc():
     assert user_store.ROLE_NAMES["agent_svc"] == "Agent 服务账号"
 
 
-def test_default_matrix_grants_only_case_write():
+def test_default_matrix_grants_minimal_write_codes():
     granted = [c for c, roles in perm_store.DEFAULT_MATRIX.items() if "agent_svc" in roles]
-    assert granted == ["case:write"]
+    assert granted == ["case:write", "api:manage"]
 
 
 def test_init_script_is_idempotent(isolated):
@@ -68,7 +69,7 @@ def test_init_script_is_idempotent(isolated):
 def test_service_account_permissions_minimal(isolated):
     tool = _load_init_tool()
     tool.main(["--password", "svc-pass-1"])
-    assert perm_store.permissions_of("agent_svc") == ["case:write"]
+    assert sorted(perm_store.permissions_of("agent_svc")) == ["api:manage", "case:write"]
     # 高危码绝不因新增角色而意外放出
     for code in ("case:delete", "user:manage", "audit:manage", "env:manage", "secret:manage"):
         assert "agent_svc" not in perm_store.matrix()[code]
