@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from backend.agent_bridge import case_gate  # noqa: E402
 from backend.agent_bridge import corpus  # noqa: E402
 from backend.agent_bridge import router as agent_router  # noqa: E402
 from core.models import TestCase as CaseRow  # noqa: E402  （别名避开 pytest 把 Test* 当用例类收集）
@@ -231,3 +232,148 @@ def test_main_app_excludes_agent_router_when_disabled():
     import backend.main as main
     assert agent_router.agent_enabled() is False
     assert not any(getattr(rt, "path", "").startswith("/api/agent") for rt in main.app.routes)
+
+
+# ==================== M3：preview / commit 落库闸门 ====================
+# 沿用纯函数风格：直接调 case_gate.preview/commit，用 monkeypatch 喂权威校验桩，
+# 不依赖 starlette.testclient（本环境未装 httpx2）。校验口径本身由 excel_loader 负责，
+# 这里锁定的是"闸门编排"：字段非法/判重/整批拒绝不落盘/编号跳过 的对外形状。
+
+from core.excel_loader import ExcelFormatError  # noqa: E402
+
+
+def _target(tmp_path):
+    f = tmp_path / "cases.xlsx"
+    f.write_bytes(b"stub")
+    return f
+
+
+def _no_existing(monkeypatch):
+    monkeypatch.setattr(case_gate.excel_loader, "load",
+                        lambda p, allow_empty=False: types.SimpleNamespace(cases=[]))
+
+
+def _ok_validate(monkeypatch):
+    monkeypatch.setattr(case_gate.excel_loader, "validate_case", _ok_tc)
+
+
+def _ok_tc(row, *, file_name="inline", row_no=0):
+    return types.SimpleNamespace(case_id=str(row.get("case_id") or ""))
+
+
+def test_preview_全部合法逐条通过(monkeypatch, tmp_path):
+    f = _target(tmp_path)
+    _no_existing(monkeypatch)
+    _ok_validate(monkeypatch)
+    rep = case_gate.preview([{"case_id": "A-1"}, {"case_id": "A-2"}], file=str(f))
+    assert rep["checked"] == 2 and rep["passed"] == 2 and rep["failed"] == 0
+    assert rep["platform"] == "interface-auto"
+    assert all(it["passed"] and not it["exists"] for it in rep["items"])
+
+
+def test_preview_字段非法定位到问题(monkeypatch, tmp_path):
+    f = _target(tmp_path)
+    _no_existing(monkeypatch)
+
+    def vc(row, *, file_name="inline", row_no=0):
+        if str(row.get("method") or "").upper() not in case_gate.excel_loader.VALID_METHODS:
+            raise ExcelFormatError("Excel 校验失败，共 1 处错误:\n[inline] 请求方式非法")
+        return types.SimpleNamespace(case_id=row.get("case_id"))
+    monkeypatch.setattr(case_gate.excel_loader, "validate_case", vc)
+    rep = case_gate.preview([{"case_id": "A-1", "method": "BAD"}], file=str(f))
+    assert rep["passed"] == 0 and rep["failed"] == 1
+    assert rep["items"][0]["passed"] is False and rep["items"][0]["problems"]
+
+
+def test_preview_编号已存在提示但不判失败(monkeypatch, tmp_path):
+    f = _target(tmp_path)
+    monkeypatch.setattr(case_gate.excel_loader, "load",
+                        lambda p, allow_empty=False: types.SimpleNamespace(
+                            cases=[types.SimpleNamespace(case_id="A-1")]))
+    _ok_validate(monkeypatch)
+    it = case_gate.preview([{"case_id": "A-1"}], file=str(f))["items"][0]
+    assert it["passed"] is True and it["exists"] is True
+    assert any("已存在" in p for p in it["problems"])
+
+
+def test_preview_目标文件不存在404(tmp_path):
+    with pytest.raises(HTTPException) as e:
+        case_gate.preview([{"case_id": "A"}], file=str(tmp_path / "nope.xlsx"))
+    assert e.value.status_code == 404
+
+
+def test_preview_空用例400():
+    with pytest.raises(HTTPException) as e:
+        case_gate.preview([])
+    assert e.value.status_code == 400
+
+
+def test_commit_全合法整批落库(monkeypatch, tmp_path):
+    f = _target(tmp_path)
+    _no_existing(monkeypatch)
+    _ok_validate(monkeypatch)
+    seen = {}
+
+    def fake_bulk(path, tcs):
+        seen["tcs"] = tcs
+        return {"imported": len(tcs), "skipped": 0, "errors": []}
+    monkeypatch.setattr(case_gate.excel_writer, "bulk_append", fake_bulk)
+    res = case_gate.commit([{"case_id": "A-1"}, {"case_id": "A-2"}], file=str(f))
+    assert res["committed"] == 2 and len(seen["tcs"]) == 2
+
+
+def test_commit_任一非法即整批拒绝不落盘(monkeypatch, tmp_path):
+    f = _target(tmp_path)
+    _no_existing(monkeypatch)
+
+    def vc(row, *, file_name="inline", row_no=0):
+        raise ExcelFormatError("失败:\n[inline] 断言不能为空")
+    monkeypatch.setattr(case_gate.excel_loader, "validate_case", vc)
+    touched = {"bulk": False}
+    monkeypatch.setattr(case_gate.excel_writer, "bulk_append",
+                        lambda *a, **k: touched.__setitem__("bulk", True))
+    with pytest.raises(HTTPException) as e:
+        case_gate.commit([{"case_id": "A-1"}], file=str(f))
+    assert e.value.status_code == 400 and e.value.detail["rejected"]
+    assert touched["bulk"] is False          # 闸门不过，绝不写文件
+
+
+def test_commit_经project_id解析目标(monkeypatch, tmp_path):
+    f = _target(tmp_path)
+    monkeypatch.setattr(case_gate.project_store, "get", lambda pid: {"id": pid, "file": str(f)})
+    _no_existing(monkeypatch)
+    _ok_validate(monkeypatch)
+    monkeypatch.setattr(case_gate.excel_writer, "bulk_append",
+                        lambda path, tcs: {"imported": len(tcs), "skipped": 0, "errors": []})
+    assert case_gate.commit([{"case_id": "A-1"}], project_id="proj_x")["committed"] == 1
+
+
+def test_commit_项目不存在404(monkeypatch):
+    monkeypatch.setattr(case_gate.project_store, "get", lambda pid: None)
+    with pytest.raises(HTTPException) as e:
+        case_gate.commit([{"case_id": "A"}], project_id="ghost")
+    assert e.value.status_code == 404
+
+
+def test_router_preview_commit_未启用404(monkeypatch):
+    body = case_gate.CaseGenerateBody(cases=[{"case_id": "A"}])
+    monkeypatch.setattr(agent_router, "agent_enabled", lambda cfg=None: False)
+    for fn in (agent_router.preview_cases, agent_router.commit_cases):
+        with pytest.raises(HTTPException) as e:
+            fn(body, {})
+        assert e.value.status_code == 404
+
+
+def test_router_preview_启用后透传(monkeypatch):
+    body = case_gate.CaseGenerateBody(cases=[{"case_id": "A"}, {"case_id": "B"}])
+    monkeypatch.setattr(agent_router, "agent_enabled", lambda cfg=None: True)
+    monkeypatch.setattr(agent_router.case_gate, "preview",
+                        lambda cases, project_id="", file="": {"ok": True, "n": len(cases)})
+    assert agent_router.preview_cases(body, {}) == {"ok": True, "n": 2}
+
+
+def test_main_app_excludes_new_agent_routes_when_disabled():
+    """M3 新增 preview/commit 亦受默认关闭保护：存量零回归。"""
+    import backend.main as main
+    paths = {getattr(rt, "path", "") for rt in main.app.routes}
+    assert not any(p.startswith("/api/agent") for p in paths)

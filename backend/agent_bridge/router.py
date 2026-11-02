@@ -11,9 +11,10 @@
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from backend.agent_bridge import corpus as corpus_mod
+from backend.agent_bridge import case_gate, corpus as corpus_mod
+from backend.shared import authz
 from core.context import load_config
 
 router = APIRouter(prefix="/api/agent", tags=["Agent 桥接"])
@@ -57,3 +58,24 @@ def export_corpus(
         "max_updated_at": max((it["updated_at"] for it in items), default=since),
         "items": items,
     }
+
+
+def _guard_enabled() -> None:
+    if not agent_enabled():
+        raise HTTPException(status_code=404, detail="Agent 桥接未启用（config.yaml: agent.enabled=false）")
+
+
+@router.post("/cases/preview", summary="生成用例草稿权威校验（不落库，逐条返回校验报告）")
+def preview_cases(body: case_gate.CaseGenerateBody,
+                  _: dict = Depends(authz.require_perm("case:write"))) -> dict:
+    """M3：Agent 产出的草稿先过平台 excel_loader 口径校验，人确认后才谈落库。"""
+    _guard_enabled()
+    return case_gate.preview(body.cases, project_id=body.project_id, file=body.file)
+
+
+@router.post("/cases/commit", summary="确认后的用例落库（整批先权威校验，通过才原子写 Excel）")
+def commit_cases(body: case_gate.CaseGenerateBody,
+                 _: dict = Depends(authz.require_perm("case:write"))) -> dict:
+    """M3：人在平台确认后落库。任一字段非法即整批拒绝；编号已存在则跳过不覆盖。"""
+    _guard_enabled()
+    return case_gate.commit(body.cases, project_id=body.project_id, file=body.file)
