@@ -771,3 +771,91 @@ export interface SkeletonResult {
   written: string[];
   errors: string[];
 }
+
+/* ================= AI 生成（qa-agent 直连 + 平台落库闸门，Agent 接入一期 M4） ================= */
+
+/** POST /v1/generations 请求（对齐 qa-agent GenerationIn；dry_run 缺省 true 恒不落库） */
+export interface GenerationReq {
+  target: string;
+  mode?: "generate" | "complete" | "expand";
+  platform?: string;
+  project_id?: string;
+  intent?: string;
+  count?: number;
+  dry_run?: boolean;
+}
+
+/** 闸门逐条结果（Agent 预检） */
+export interface GenerationValidationItem {
+  case_id: string;
+  passed: boolean;
+  problems: string[];
+}
+
+/** 校验闸门报告；authoritative=false 表示仅结构预检（平台离线，产出仅供建议） */
+export interface GenerationValidation {
+  checked: number;
+  passed: number;
+  failed: number;
+  items: GenerationValidationItem[];
+  authoritative: boolean;
+  degraded?: boolean;
+  note?: string;
+  platform?: string;
+}
+
+/** 知识引用（每条生成用例都要能点开看依据） */
+export interface GenerationCitation {
+  kb_id: string;
+  source_uri: string;
+  domain: string;
+  title?: string;
+  score?: number;
+}
+
+/** POST /v1/generations 响应（qa-agent GenerationOut）；cases 列名对齐 Excel 用例表 */
+export interface GenerationOut {
+  ok: boolean;
+  mode: string;
+  cases: Record<string, unknown>[];
+  validation: GenerationValidation;
+  errors: string[];
+  citations: GenerationCitation[];
+  degraded: boolean;
+  trace_id: string;
+}
+
+/** 平台权威校验预览 POST /api/agent/cases/preview（不落盘） */
+export interface AgentPreviewItem {
+  case_id: string;
+  passed: boolean;
+  exists: boolean;
+  problems: string[];
+}
+
+export interface AgentPreviewResp {
+  platform: string;
+  file: string;
+  checked: number;
+  passed: number;
+  failed: number;
+  items: AgentPreviewItem[];
+  summary: string;
+}
+
+/** 确认落库 POST /api/agent/cases/commit（整批先验后写，任一非法即全拒） */
+export interface AgentCommitResp {
+  platform: string;
+  file: string;
+  committed: number;
+  skipped: number;
+  errors: string[];
+  summary: string;
+}
+
+/** preview/commit 共用的请求体 */
+export interface AgentCasesBody {
+  cases: Record<string, unknown>[];
+  project_id?: string;
+  file?: string;
+}

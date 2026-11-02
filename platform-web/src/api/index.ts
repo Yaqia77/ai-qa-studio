@@ -1,7 +1,7 @@
 /** Axios 封装 + 接口函数（开发期经 Vite 代理 /api → FastAPI:8000）。 */
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import type { CaseItem, CasePage, CaseMeta, UiCaseItem, UiCasePage, UiCaseMeta, UiSession, UiSessionStatus, UiSessionCollectResult, UiSessionMeta, AppCaseItem, AppCasePage, AppCaseMeta, CaseHistoryResp, EnvsResp, EnvsUpdate, RunCasesResp, RunCaseDetail, RunItem, SecretsResp, PlanItem, PlanCreateReq, PlanUpdateReq, WebhookItem, WebhookCreateReq, WebhookUpdateReq, ScheduleItem, ScheduleCreateReq, ScheduleUpdateReq, LoginResp, UserInfo, UserCreateReq, UserUpdateReq, AuditItem, AuditLogsResp, PermMatrixResp, PermSaveResp, ScriptItem, ScriptCreateReq, ScriptUpdateReq, ScriptMeta, ApiDefItem, ApiDefCreateReq, ApiDefUpdateReq, ApiDefMeta, AggregateResult, OpenApiImportResult, SkeletonReq, SkeletonResult, ImportPreviewResp, ImportCaseDraft, Project, UiImportPreviewResp } from "../types";
+import type { CaseItem, CasePage, CaseMeta, UiCaseItem, UiCasePage, UiCaseMeta, UiSession, UiSessionStatus, UiSessionCollectResult, UiSessionMeta, AppCaseItem, AppCasePage, AppCaseMeta, CaseHistoryResp, EnvsResp, EnvsUpdate, RunCasesResp, RunCaseDetail, RunItem, SecretsResp, PlanItem, PlanCreateReq, PlanUpdateReq, WebhookItem, WebhookCreateReq, WebhookUpdateReq, ScheduleItem, ScheduleCreateReq, ScheduleUpdateReq, LoginResp, UserInfo, UserCreateReq, UserUpdateReq, AuditItem, AuditLogsResp, PermMatrixResp, PermSaveResp, ScriptItem, ScriptCreateReq, ScriptUpdateReq, ScriptMeta, ApiDefItem, ApiDefCreateReq, ApiDefUpdateReq, ApiDefMeta, AggregateResult, OpenApiImportResult, SkeletonReq, SkeletonResult, ImportPreviewResp, ImportCaseDraft, Project, UiImportPreviewResp, GenerationReq, GenerationOut, AgentPreviewResp, AgentCommitResp, AgentCasesBody } from "../types";
 import { clearToken, getToken } from "../utils/session";
 
 const http = axios.create({ baseURL: "/api", timeout: 30000 });
@@ -33,6 +33,38 @@ http.interceptors.response.use(
     // 错误归一：后端 detail 优先，其次网络层信息
     const detail = error.response?.data?.detail ?? error.message;
     ElMessage.error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * qa-agent 专用通道：/agent 代理 → 独立 Agent 服务（8100）。
+ * 与平台 http 实例分开：不注入平台 token（Agent 认 X-Agent-Key），
+ * 生成链路含检索+模型调用耗时高，超时放宽到 2 分钟；错误文案按 Agent 语义归一。
+ */
+const agentHttp = axios.create({ baseURL: "/agent", timeout: 120000 });
+
+agentHttp.interceptors.request.use((cfg) => {
+  // 网关 Key 由部署方通过环境变量注入 Agent 侧；本地 require_key=false 时留空即可
+  const key = localStorage.getItem("agent_key");
+  if (key) cfg.headers["X-Agent-Key"] = key;
+  return cfg;
+});
+
+agentHttp.interceptors.response.use(
+  (resp) => resp,
+  (error) => {
+    const status = error.response?.status;
+    let msg: string;
+    if (!error.response) {
+      msg = "Agent 服务不可达：请确认 qa-agent 已在 8100 端口启动（或生产反代已配 /agent）";
+    } else if (status === 401) {
+      msg = "Agent 网关鉴权失败：请在浏览器 localStorage 设置 agent_key 后重试";
+    } else {
+      const d = error.response.data?.detail ?? error.response.data?.code;
+      msg = typeof d === "string" ? d : `Agent 调用失败（HTTP ${status}）`;
+    }
+    ElMessage.error(msg);
     return Promise.reject(error);
   }
 );
@@ -541,4 +573,21 @@ export const api = {
   setDeps: (caseId: string, deps: string[]) =>
     http.put<{ case_id: string; dependencies: string[] }>(
       `/dependencies/${encodeURIComponent(caseId)}`, { dependencies: deps }).then((r) => r.data),
+
+  /* ---------- AI 生成（Agent 接入一期 M4）----------
+   * 生成直连 qa-agent（/agent 代理 → 8100，独立服务无平台登录态）；
+   * 预览/落库走平台 /api/agent/*（权威校验闸门 + case:write 权限），两条链路职责分离。
+   */
+  agentHealth: () => agentHttp.get<{ skills: string[] }>("/health").then((r) => r.data),
+
+  agentGenerate: (body: GenerationReq) =>
+    agentHttp.post<GenerationOut>("/v1/generations", body).then((r) => r.data),
+
+  /** 平台权威校验预览（不落盘）：逐条 passed/exists/problems */
+  agentPreviewCases: (body: AgentCasesBody) =>
+    http.post<AgentPreviewResp>("/agent/cases/preview", body).then((r) => r.data),
+
+  /** 确认落库：整批先验后写，任一非法即全拒（后端 400 带 rejected 明细） */
+  agentCommitCases: (body: AgentCasesBody) =>
+    http.post<AgentCommitResp>("/agent/cases/commit", body).then((r) => r.data),
 };

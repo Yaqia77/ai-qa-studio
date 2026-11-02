@@ -31,6 +31,13 @@ const router = createRouter({
       meta: { title: "用例管理" },
     },
     {
+      // AI 生成：菜单级 case:write 拦截；预览/落库接口后端还有 require_perm 二次校验
+      path: "/agent-gen",
+      name: "agent-gen",
+      component: () => import("../views/AgentGenView.vue"),
+      meta: { title: "AI 生成", perm: "case:write" },
+    },
+    {
       // 登录态页：查看仅需登录态，写操作（新建/编辑/删除/采集）靠页内 v-perm='session:manage' 门控
       path: "/ui-sessions",
       name: "ui-sessions",
