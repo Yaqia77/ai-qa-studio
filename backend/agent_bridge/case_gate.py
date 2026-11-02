@@ -9,9 +9,16 @@
   的"写临时文件→全量校验→原子替换"，任一字段非法即整批拒绝，绝不部分污染用例文件；
 - **默认关闭 + 双重鉴权**：路由仅在 `agent.enabled=true` 时注册，端点内再校验一次；
   写权限 `case:write` 由后端 `authz` 兜底，Agent 服务账号只给只读 + case:write。
+
+二期 P5 追加（设计文档第六节 3/4 条）：
+- commit 接受调用方 `meta`（origin/trace_id）并回显：审计中间件本就全量记请求体摘要，
+  meta 进体后 audit 页可按 `"origin": "chat"` 检索 AI 落库（Excel 不动表结构）；
+- 编号冲突**自动递增改名**（A-01 占用 → A-02，保持补零宽度；无数字后缀则追加 -2），
+  绝不静默覆盖/丢弃，改名映射随响应回带给 Agent 声明。
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +43,7 @@ class CaseGenerateBody(BaseModel):
     cases: list[dict] = Field(default_factory=list, description="待校验/落库的用例草稿")
     project_id: str = Field(default="", description="目标项目 id（据此解析用例文件）")
     file: str = Field(default="", description="显式目标文件（相对项目根，优先于 project_id）")
+    meta: dict = Field(default_factory=dict, description="调用方元信息（origin/trace_id），commit 回显进审计")
 
 
 def _prepare(case: dict) -> dict:
@@ -126,8 +134,12 @@ def preview(cases: list[dict], *, project_id: str = "", file: str = "") -> dict:
     }
 
 
-def commit(cases: list[dict], *, project_id: str = "", file: str = "") -> dict:
-    """整批先权威校验，全合法才原子落库；任一非法即拒绝（不落盘），编号已存在则跳过。"""
+def commit(cases: list[dict], *, project_id: str = "", file: str = "", meta: dict | None = None) -> dict:
+    """整批先权威校验，全合法才原子落库；任一非法即拒绝（不落盘）。
+
+    编号已存在不再跳过/覆盖，而是自动递增改名（P5：A-01 占用 → A-02），
+    映射在响应 `renamed` 回带，由 Agent 在对话流里向人声明。
+    """
     if not cases:
         raise HTTPException(status_code=400, detail="没有待落库的用例")
     body = CaseGenerateBody(cases=cases, project_id=project_id, file=file)
@@ -135,9 +147,22 @@ def commit(cases: list[dict], *, project_id: str = "", file: str = "") -> dict:
     _require_file(path)
 
     # 权威闸门：字段非法 → 整批拒绝，绝不带着坏数据去写文件
-    tcs, rejected = [], []
+    existing = _existing_ids(path)
+    tcs, rejected, renamed = [], [], []
     for raw in cases:
-        tc, problems = _validate(raw)
+        row = dict(raw or {})
+        cid = str(row.get("case_id") or "").strip()
+        if cid and cid.lower() in existing:
+            new_id = _bump_id(cid, existing)
+            if new_id is None:
+                raise HTTPException(status_code=409,
+                                    detail=f"编号 {cid} 连续递增 50 次仍冲突，请人工处理后再落库")
+            row["case_id"] = new_id
+            renamed.append({"from": cid, "to": new_id})
+            cid = new_id
+        if cid:
+            existing.add(cid.lower())        # 同批内部互斥：前一条占了新号，后一条接着让
+        tc, problems = _validate(row)
         if problems:
             rejected.append({"case_id": str((raw or {}).get("case_id") or ""), "problems": problems})
         else:
@@ -152,11 +177,35 @@ def commit(cases: list[dict], *, project_id: str = "", file: str = "") -> dict:
         raise HTTPException(status_code=_ERROR_STATUS.get(exc.kind, 400), detail=str(exc))
 
     rel = str(path.relative_to(ROOT)).replace("\\", "/") if path.is_relative_to(ROOT) else path.name
+    note = f"，自动改名 {len(renamed)} 条" if renamed else ""
     return {
         "platform": "interface-auto",
         "file": rel,
         "committed": summary.get("imported", 0),
         "skipped": summary.get("skipped", 0),
         "errors": summary.get("errors", []),
-        "summary": f"落库 {summary.get('imported', 0)} 条，跳过（编号已存在）{summary.get('skipped', 0)} 条",
+        "renamed": renamed,
+        # meta 原样回显：审计中间件记录的请求体摘要里因此永远带得上 origin/trace_id，
+        # 用例管理「AI 生成」筛选与排障链路据此关联
+        "meta": dict(meta or {}),
+        "summary": f"落库 {summary.get('imported', 0)} 条，跳过 {summary.get('skipped', 0)} 条{note}",
     }
+
+
+_ID_TAIL_RE = re.compile(r"^(.*?)(\d+)$")
+RENAME_MAX_ATTEMPTS = 50          # 与 409 文案同口径：递增让位最多 50 次
+
+
+def _bump_id(cid: str, existing: set[str]) -> str | None:
+    """在 existing 之外给 cid 找一个可用新号：尾段数字递增（保持补零宽度），
+    无数字尾段则追加 -2/-3…；找不到返回 None。"""
+    m = _ID_TAIL_RE.match(cid)
+    for step in range(1, RENAME_MAX_ATTEMPTS + 1):
+        if m:
+            width = len(m.group(2))
+            cand = f"{m.group(1)}{str(int(m.group(2)) + step).zfill(width)}"
+        else:
+            cand = f"{cid}-{step + 1}"
+        if cand.lower() not in existing:
+            return cand
+    return None

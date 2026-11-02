@@ -913,7 +913,9 @@ export type ChatEvent =
   | { type: "step_start"; payload: { seq: number; summary: string } }
   | { type: "step_finish"; payload: { seq: number; ok: boolean; summary: string } }
   | { type: "case_ready"; payload: ChatCaseReady }
-  | { type: "registered"; payload: { case_ids: string[]; file: string; count: number } }
+  | { type: "registered"; payload: { case_ids: string[]; file: string; count: number;
+                                     /** P5：平台编号冲突自动让号（from=草稿旧号，to=落库新号） */
+                                     renamed?: { from: string; to: string }[] } }
   | { type: "ask"; payload: { question: string; options?: string[] } }
   | { type: "citation"; payload: { kb_id: string; title: string; source_uri: string } }
   | { type: "error"; payload: { detail: string; code: string; trace_id: string } }

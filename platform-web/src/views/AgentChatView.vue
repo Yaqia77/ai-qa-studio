@@ -161,12 +161,26 @@ function pushAgentText(text: string): ChatMsg {
   return m;
 }
 
-/** registered 事件：把对应 case_id 的卡片翻成「已落库 ✓」 */
-function markRegistered(caseIds: string[], file: string) {
+/** registered 事件：把对应 case_id 的卡片翻成「已落库 ✓」；平台让号（P5）同步改卡片编号与草稿 key */
+function markRegistered(caseIds: string[], file: string, renamed: { from: string; to: string }[] = []) {
+  const toOld = new Map(renamed.map((r) => [r.to, r.from]));   // 事件带的是新号，卡片还是旧号
+  const toNew = new Map(renamed.map((r) => [r.from, r.to]));
   for (const m of messages.value) {
-    if (m.kind === "case" && m.caseId && caseIds.includes(m.caseId)) {
-      m.registered = true;
-      m.registeredFile = file;
+    if (m.kind !== "case" || !m.caseId) continue;
+    const matchId = toOld.get(m.caseId) ?? m.caseId;
+    if (!caseIds.includes(m.caseId) && !caseIds.includes(matchId)) continue;
+    m.registered = true;
+    m.registeredFile = file;
+    const newId = toNew.get(m.caseId);
+    if (newId) {
+      const d = { ...drafts.value };
+      if (d[m.caseId]) {
+        d[newId] = { ...(d[m.caseId] as Record<string, unknown>), case_id: newId };
+        delete d[m.caseId];
+      }
+      drafts.value = d;
+      m.caseId = newId;
+      m.caseData = { ...m.caseData, case_id: newId };
     }
   }
 }
@@ -205,7 +219,7 @@ function onEvent(ev: ChatEvent) {
       break;
     }
     case "registered":
-      markRegistered(ev.payload.case_ids, ev.payload.file);
+      markRegistered(ev.payload.case_ids, ev.payload.file, ev.payload.renamed ?? []);
       break;
     case "ask": {
       const cur = lastStreamingText();

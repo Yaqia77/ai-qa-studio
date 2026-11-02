@@ -65,6 +65,7 @@ interface-auto/
 │   ├── gen_secret.py         # 生成敏感凭证模板
 │   ├── smoke_authz.py        # 权限全链路冒烟（含写接口越权试探）
 │   ├── smoke_full.py         # 全功能端到端冒烟（项目/用例/导入/依赖/定时/执行主链路）
+│   ├── smoke_chat.py         # 对话式全链路在线冒烟（需平台+qa-agent 双服务，见「AI 生成」一节）
 │   ├── smoke_scripts.py      # 公共脚本冒烟
 │   └── smoke_api_defs.py     # 接口定义冒烟
 ├── main.py                   # CLI 入口
@@ -386,6 +387,8 @@ cd platform-web ; npm run dev
 .venv\Scripts\python.exe tools\smoke_full.py
 # UI 自动化端到端冒烟（建 UI 项目 → 用例 CRUD/迁移 → 发起批次 → 步骤轨迹与截图 → 清理，需 chromium）
 .venv\Scripts\python.exe tools\smoke_ui.py
+# 对话式全链路冒烟（需平台 8000 + qa-agent 8100 双在线，config.yaml 临时置 agent.enabled=true）
+$env:IA_SVC_PASSWORD="<agent_svc 密码>" ; .venv\Scripts\python.exe tools\smoke_chat.py
 ```
 
 角色与权限矩阵（默认基线写在 `backend/perm_store.py`，可在「系统管理 → 角色权限」页勾选调整，自定义分配存 `data/permissions.json`）：
@@ -441,12 +444,15 @@ cd platform-web ; npm run dev
 - 统计报表页：跨运行的通过率/趋势与模块分布汇总（浅色统一风格），数据源于已归档的报告批次
 - 用例项目维度：「用例管理」页以**项目切换器**隔离不同被测系统（项目 = 一个 Excel 文件，详见上方「多项目隔离」）；
   左栏顶部切换项目、就地新建/重命名/删除（需 `case:write`/`case:delete`），选定后模块导航与用例读写仅作用于该项目文件
-- AI 生成（「测试管理 → AI 生成」，需 `case:write`）：对接独立 qa-agent 服务（另仓，设 `QA_AGENT_*` 环境变量后
-  8100 端口启动），“生成直连、落库过闸”两段式：浏览器经 `/agent` 代理直连 Agent 生成草稿（网关 Key 存
-  `localStorage.agent_key`），预览逐条展示校验与新旧对照，全部过检后确认才写回用例文件；
+- AI 生成（「测试管理 → AI 生成」，需 `case:write`）：对话式二期——聊天页（SSE 流式）+ 左侧步骤画布
+  （节点可点开编辑、patch 回对话重过闸）+ 接口文档附件一键生成；对接独立 qa-agent 服务（另仓，
+  设 `QA_AGENT_*` 环境变量后 8100 端口启动，网关 Key 存 `localStorage.agent_key`）。
+  落库红线不变：过平台权威校验才落，降级/离线自动退为人工确认；`auto` 模式落库携带
+  `meta:{origin:"chat", trace_id}` 可审计检索，编号冲突平台自动递增改名（`renamed` 回带声明，绝不静默覆盖）；
   平台侧需 `config.yaml` 置 `agent.enabled=true`（缺省 false 零回归），服务账号用
-  `tools/init_agent_svc.py` 一次性创建（角色 `agent_svc`：只读 + `case:write`，随机密码只打印一次，
-  填入 qa-agent 启动环境变量 `QA_AGENT_PLATFORM_PASSWORD`，密码不落任何文件）
+  `tools/init_agent_svc.py` 一次性创建（角色 `agent_svc`：只读 + `case:write` + `api:manage`，随机密码只打印一次，
+  填入 qa-agent 启动环境变量 `QA_AGENT_PLATFORM_PASSWORD`，密码不落任何文件）；
+  在线全链路验收：双服务启动后跑 `tools/smoke_chat.py`（对话→文档登记→落库/让号→用例回读→审计→零副作用清理）
 
 ## 路线图
 
@@ -466,4 +472,6 @@ cd platform-web ; npm run dev
   - [x] v2 冒烟：全功能端到端冒烟脚本（smoke_full.py，项目/用例/导入/依赖/定时/执行主链路）
   - [x] v2 UI：UI 自动化（项目分型 api/ui + 可视化步骤编辑器 + Playwright 解释器 + 步骤轨迹/截图报告）
   - [x] v2 Agent：AI 用例生成接入（独立 qa-agent 服务 + 知识库 + 校验闸门 + 「AI 生成」页，生成直连、落库过闸）
+  - [x] v2 Agent 二期：对话式重构（SSE 聊天 + 步骤画布编辑闭环 + 文档一键生成 + 自动落库 meta 审计/编号让号，
+    在线门禁 smoke_chat.py）
 - [ ] v1.1：CI 集成（Jenkinsfile / GitHub Actions）、失败通知模板扩充

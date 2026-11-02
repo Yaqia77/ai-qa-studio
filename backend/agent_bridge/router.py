@@ -73,9 +73,11 @@ def preview_cases(body: case_gate.CaseGenerateBody,
     return case_gate.preview(body.cases, project_id=body.project_id, file=body.file)
 
 
-@router.post("/cases/commit", summary="确认后的用例落库（整批先权威校验，通过才原子写 Excel）")
+@router.post("/cases/commit", summary="确认后的用例落库（整批先权威校验，通过才原子写 Excel；编号冲突自动递增改名）")
 def commit_cases(body: case_gate.CaseGenerateBody,
                  _: dict = Depends(authz.require_perm("case:write"))) -> dict:
-    """M3：人在平台确认后落库。任一字段非法即整批拒绝；编号已存在则跳过不覆盖。"""
+    """M3：人在平台确认后落库。任一字段非法即整批拒绝；编号已存在自动让号改名并回带映射。
+
+    meta（origin/trace_id）原样回显：审计中间件记录的请求体摘要据此可检 AI 对话落库。"""
     _guard_enabled()
-    return case_gate.commit(body.cases, project_id=body.project_id, file=body.file)
+    return case_gate.commit(body.cases, project_id=body.project_id, file=body.file, meta=body.meta)

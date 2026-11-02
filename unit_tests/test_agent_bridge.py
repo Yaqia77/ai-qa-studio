@@ -355,6 +355,66 @@ def test_commit_项目不存在404(monkeypatch):
     assert e.value.status_code == 404
 
 
+# ------------------------------------------------------------------ P5：冲突自动改名 + meta
+
+def _existing(monkeypatch, *ids):
+    monkeypatch.setattr(case_gate.excel_loader, "load",
+                        lambda p, allow_empty=False: types.SimpleNamespace(
+                            cases=[types.SimpleNamespace(case_id=i) for i in ids]))
+
+
+def _capture_bulk(monkeypatch):
+    seen = {}
+
+    def fake_bulk(path, tcs):
+        seen["ids"] = [t.case_id for t in tcs]
+        return {"imported": len(tcs), "skipped": 0, "errors": []}
+    monkeypatch.setattr(case_gate.excel_writer, "bulk_append", fake_bulk)
+    return seen
+
+
+def test_commit_编号冲突自动递增改名且回带映射(monkeypatch, tmp_path):
+    f = _target(tmp_path)
+    _existing(monkeypatch, "AL-01")
+    _ok_validate(monkeypatch)
+    seen = _capture_bulk(monkeypatch)
+    res = case_gate.commit([{"case_id": "AL-01"}], file=str(f))
+    assert seen["ids"] == ["AL-02"]                     # 保持补零宽度递增，不静默覆盖
+    assert res["renamed"] == [{"from": "AL-01", "to": "AL-02"}]
+    assert "自动改名" in res["summary"]
+
+
+def test_commit_同批内部撞号也逐个让位(monkeypatch, tmp_path):
+    f = _target(tmp_path)
+    _existing(monkeypatch, "AL-01")
+    _ok_validate(monkeypatch)
+    seen = _capture_bulk(monkeypatch)
+    res = case_gate.commit([{"case_id": "AL-01"}, {"case_id": "AL-01"}], file=str(f))
+    assert seen["ids"] == ["AL-02", "AL-03"]            # 第一条占了新号，第二条接着让
+    assert len(res["renamed"]) == 2
+
+
+def test_commit_无数字尾段追加后缀(monkeypatch, tmp_path):
+    f = _target(tmp_path)
+    _existing(monkeypatch, "ALPHA")
+    _ok_validate(monkeypatch)
+    seen = _capture_bulk(monkeypatch)
+    case_gate.commit([{"case_id": "ALPHA"}], file=str(f))
+    assert seen["ids"] == ["ALPHA-2"]
+
+
+def test_commit_meta原样回显供审计关联(monkeypatch, tmp_path):
+    f = _target(tmp_path)
+    _no_existing(monkeypatch)
+    _ok_validate(monkeypatch)
+    _capture_bulk(monkeypatch)
+    res = case_gate.commit([{"case_id": "A-1"}], file=str(f),
+                           meta={"origin": "chat", "trace_id": "t-42"})
+    assert res["meta"] == {"origin": "chat", "trace_id": "t-42"}
+    # 不传 meta 的旧调用（一期表单页/冒烟）向后兼容：回空字典不报错
+    assert case_gate.commit([{"case_id": "A-2"}], file=str(f))["meta"] == {}
+
+
 def test_router_preview_commit_未启用404(monkeypatch):
     body = case_gate.CaseGenerateBody(cases=[{"case_id": "A"}])
     monkeypatch.setattr(agent_router, "agent_enabled", lambda cfg=None: False)
