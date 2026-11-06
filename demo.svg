@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 920" width="960" height="920">
+  <style>text { font-family: Inter, -apple-system, SF Pro Display, PingFang SC, Microsoft YaHei, Microsoft JhengHei, SimHei, sans-serif; fill: #f0f6fc; }</style>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117"/><stop offset="50%" stop-color="#161b22"/><stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+    <radialGradient id="glow-blue" cx="30%" cy="35%" r="45%">
+      <stop offset="0%" stop-color="rgba(88,166,255,0.14)"/><stop offset="100%" stop-color="rgba(88,166,255,0)"/>
+    </radialGradient>
+    <radialGradient id="glow-purple" cx="72%" cy="62%" r="40%">
+      <stop offset="0%" stop-color="rgba(188,140,255,0.11)"/><stop offset="100%" stop-color="rgba(188,140,255,0)"/>
+    </radialGradient>
+    <radialGradient id="glow-green" cx="18%" cy="78%" r="35%">
+      <stop offset="0%" stop-color="rgba(63,185,80,0.08)"/><stop offset="100%" stop-color="rgba(63,185,80,0)"/>
+    </radialGradient>
+    <linearGradient id="text-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#bc8cff"/>
+    </linearGradient>
+    <linearGradient id="llm-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(88,166,255,0.16)"/><stop offset="100%" stop-color="rgba(188,140,255,0.16)"/>
+    </linearGradient>
+    <filter id="node-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#58a6ff" flood-opacity="0.45"/>
+    </filter>
+    <marker id="arr-blue" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#58a6ff"/></marker>
+    <marker id="arr-blue-rev" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M10,0 L0,4 L10,8 Z" fill="#58a6ff"/></marker>
+    <marker id="arr-orange" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#f78166"/></marker>
+    <marker id="arr-orange-rev" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M10,0 L0,4 L10,8 Z" fill="#f78166"/></marker>
+    <marker id="arr-green" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#3fb950"/></marker>
+    <marker id="arr-green-rev" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M10,0 L0,4 L10,8 Z" fill="#3fb950"/></marker>
+    <marker id="arr-purple" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#bc8cff"/></marker>
+    <marker id="arr-purple-rev" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M10,0 L0,4 L10,8 Z" fill="#bc8cff"/></marker>
+  </defs>
+  <rect width="960" height="920" fill="url(#bg)"/>
+  <rect width="960" height="920" fill="url(#glow-blue)"/>
+  <rect width="960" height="920" fill="url(#glow-purple)"/>
+  <rect width="960" height="920" fill="url(#glow-green)"/>
+  <text x="480" y="46" text-anchor="middle" font-size="20" font-weight="700" fill="url(#text-grad)">Agentic RAG 智能体应用架构</text>
+  <text x="480" y="70" text-anchor="middle" font-size="12" fill="#8b949e">检索增强生成 · 自主决策 · 工具编排 · 记忆管理</text>
+  <line x1="80" y1="120" x2="113" y2="120" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <line x1="205" y1="147" x2="205" y2="238" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <text x="215" y="196" font-size="11" fill="#8b949e">任务下发</text>
+  <line x1="282" y1="275" x2="314" y2="275" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <line x1="476" y1="275" x2="508" y2="275" stroke="#f78166" stroke-width="1.8" opacity="0.9" marker-end="url(#arr-orange)"/>
+  <text x="490" y="266" text-anchor="middle" font-size="11" fill="#f78166">调用</text>
+  <line x1="662" y1="275" x2="696" y2="275" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <text x="680" y="266" text-anchor="middle" font-size="11" fill="#8b949e">汇总</text>
+  <path d="M 585 238 L 585 234 Q 585 224 575 224 L 405 224 Q 395 224 395 234 L 395 236" fill="none" stroke="#bc8cff" stroke-width="1.6" opacity="0.9" marker-end="url(#arr-purple)"/>
+  <text x="490" y="216" text-anchor="middle" font-size="11" fill="#bc8cff">ReAct 迭代 · 观察再推理</text>
+  <path d="M 585 312 L 585 335 L 440 335 L 440 626" fill="none" stroke="#f78166" stroke-width="1.8" opacity="0.9" marker-end="url(#arr-orange)"/>
+  <text x="448" y="500" font-size="11" fill="#f78166">工具调用</text>
+  <path d="M 475 626 L 475 415 L 775 415 L 775 314" fill="none" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <text x="625" y="406" text-anchor="middle" font-size="11" fill="#8b949e">执行结果 / 观察</text>
+  <line x1="585" y1="688" x2="585" y2="577" stroke="#3fb950" stroke-width="1.6" opacity="0.9" marker-end="url(#arr-green)"/>
+  <text x="597" y="614" font-size="11" fill="#3fb950">向量检索 top-k</text>
+  <path d="M 395 314 L 395 352 L 200 352 L 200 488" fill="none" stroke="#3fb950" stroke-width="1.6" opacity="0.9" marker-start="url(#arr-green-rev)" marker-end="url(#arr-green)"/>
+  <text x="297" y="344" text-anchor="middle" font-size="11" fill="#3fb950">上下文读写</text>
+  <line x1="262" y1="530" x2="284" y2="530" stroke="#3fb950" stroke-width="1.4" stroke-dasharray="5,3" opacity="0.85" marker-end="url(#arr-green)"/>
+  <text x="273" y="519" text-anchor="middle" font-size="11" fill="#3fb950">巩固</text>
+  <path d="M 852 275 L 895 275 L 895 840 L 844 840" fill="none" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <text x="886" y="406" text-anchor="end" font-size="11" fill="#8b949e">流式响应</text>
+  <rect x="110" y="190" width="760" height="200" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="6,4" data-graph-role="container"/>
+  <text x="125" y="214" font-size="13" font-weight="600" fill="#58a6ff">Agent Core · 推理与决策</text>
+  <rect x="110" y="440" width="310" height="160" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="6,4" data-graph-role="container"/>
+  <text x="125" y="464" font-size="13" font-weight="600" fill="#3fb950">Memory · 记忆层</text>
+  <rect x="500" y="440" width="370" height="160" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="6,4" data-graph-role="container"/>
+  <text x="515" y="464" font-size="13" font-weight="600" fill="#bc8cff">Knowledge · 知识层</text>
+  <rect x="110" y="630" width="760" height="140" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="6,4" data-graph-role="container"/>
+  <text x="125" y="658" font-size="13" font-weight="600" fill="#f78166">Tools · 工具层（沙箱隔离）</text>
+  <circle cx="62" cy="104" r="9" fill="none" stroke="#f0f6fc" stroke-width="1.6"/>
+  <line x1="62" y1="113" x2="62" y2="140" stroke="#f0f6fc" stroke-width="1.6"/>
+  <line x1="48" y1="121" x2="76" y2="121" stroke="#f0f6fc" stroke-width="1.6"/>
+  <line x1="62" y1="140" x2="52" y2="156" stroke="#f0f6fc" stroke-width="1.6"/>
+  <line x1="62" y1="140" x2="72" y2="156" stroke="#f0f6fc" stroke-width="1.6"/>
+  <text x="62" y="174" text-anchor="middle" font-size="12" fill="#8b949e">用户</text>
+  <rect x="115" y="95" width="180" height="52" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="123" y1="96" x2="287" y2="96" stroke="rgba(255,255,255,0.25)"/>
+  <text x="205" y="118" text-anchor="middle" font-size="14" font-weight="600">用户查询</text>
+  <text x="205" y="137" text-anchor="middle" font-size="11" fill="#8b949e">Query / Task</text>
+  <rect x="130" y="240" width="150" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="138" y1="241" x2="272" y2="241" stroke="rgba(255,255,255,0.25)"/>
+  <g stroke="#58a6ff" stroke-width="1.6" opacity="0.9"><line x1="198" y1="252" x2="212" y2="252"/><line x1="198" y1="257" x2="212" y2="257"/><line x1="198" y1="262" x2="212" y2="262"/></g>
+  <text x="205" y="281" text-anchor="middle" font-size="14" font-weight="600">规划器</text>
+  <text x="205" y="299" text-anchor="middle" font-size="11" fill="#8b949e">Planner · 任务拆解</text>
+  <rect x="316" y="238" width="158" height="74" rx="12" fill="url(#llm-grad)" stroke="rgba(255,255,255,0.15)" filter="url(#node-glow)"/>
+  <rect x="321" y="243" width="148" height="64" rx="10" fill="none" stroke="#58a6ff" stroke-opacity="0.45"/>
+  <path d="M 395 246 L 398 253 L 406 256 L 398 259 L 395 266 L 392 259 L 384 256 L 392 253 Z" fill="#58a6ff"/>
+  <text x="395" y="281" text-anchor="middle" font-size="14" font-weight="600">LLM 推理核心</text>
+  <text x="395" y="299" text-anchor="middle" font-size="11" fill="#8b949e">Reasoning Engine</text>
+  <rect x="510" y="240" width="150" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="518" y1="241" x2="652" y2="241" stroke="rgba(255,255,255,0.25)"/>
+  <g stroke="#58a6ff" stroke-width="1.6" opacity="0.9"><line x1="576" y1="253" x2="592" y2="253"/><line x1="594" y1="261" x2="578" y2="261"/></g>
+  <path d="M 575 250 L 571 253 L 575 256 Z" fill="#58a6ff"/><path d="M 593 258 L 597 261 L 593 264 Z" fill="#58a6ff"/>
+  <text x="585" y="281" text-anchor="middle" font-size="14" font-weight="600">工具选择器</text>
+  <text x="585" y="299" text-anchor="middle" font-size="11" fill="#8b949e">Tool Router</text>
+  <rect x="700" y="240" width="150" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="708" y1="241" x2="842" y2="241" stroke="rgba(255,255,255,0.25)"/>
+  <g stroke="#58a6ff" stroke-width="1.6" opacity="0.9"><line x1="769" y1="252" x2="781" y2="252"/><line x1="765" y1="257" x2="785" y2="257"/><line x1="771" y1="262" x2="779" y2="262"/></g>
+  <text x="775" y="281" text-anchor="middle" font-size="14" font-weight="600">结果综合器</text>
+  <text x="775" y="299" text-anchor="middle" font-size="11" fill="#8b949e">Synthesizer</text>
+  <rect x="125" y="490" width="135" height="80" rx="12" fill="rgba(255,255,255,0.05)" stroke="rgba(63,185,80,0.55)" stroke-dasharray="5,3"/>
+  <circle cx="192" cy="512" r="8" fill="none" stroke="#3fb950" stroke-width="1.4" opacity="0.9"/>
+  <line x1="192" y1="512" x2="197" y2="516" stroke="#3fb950" stroke-width="1.4" opacity="0.9"/>
+  <line x1="192" y1="512" x2="192" y2="506" stroke="#3fb950" stroke-width="1.4" opacity="0.9"/>
+  <text x="192" y="546" text-anchor="middle" font-size="14" font-weight="600">短期记忆</text>
+  <text x="192" y="564" text-anchor="middle" font-size="11" fill="#8b949e">上下文窗口</text>
+  <ellipse cx="346" cy="502" rx="58" ry="9" fill="rgba(63,185,80,0.10)" stroke="rgba(63,185,80,0.55)"/>
+  <path d="M 288 502 L 288 560 A 58 9 0 0 0 404 560 L 404 502" fill="rgba(63,185,80,0.06)" stroke="rgba(63,185,80,0.55)"/>
+  <ellipse cx="346" cy="502" rx="58" ry="9" fill="rgba(63,185,80,0.06)" stroke="rgba(63,185,80,0.55)"/>
+  <text x="346" y="538" text-anchor="middle" font-size="14" font-weight="600">长期记忆</text>
+  <text x="346" y="556" text-anchor="middle" font-size="11" fill="#8b949e">事实 / 偏好</text>
+  <ellipse cx="585" cy="502" rx="62" ry="9" fill="rgba(188,140,255,0.12)" stroke="rgba(188,140,255,0.6)"/>
+  <path d="M 523 502 L 523 566 A 62 9 0 0 0 647 566 L 647 502" fill="rgba(188,140,255,0.07)" stroke="rgba(188,140,255,0.6)"/>
+  <ellipse cx="585" cy="502" rx="62" ry="9" fill="rgba(188,140,255,0.07)" stroke="rgba(188,140,255,0.6)"/>
+  <g stroke="rgba(188,140,255,0.5)" stroke-width="1.2"><line x1="545" y1="516" x2="625" y2="516"/><line x1="545" y1="524" x2="625" y2="524"/></g>
+  <text x="585" y="548" text-anchor="middle" font-size="14" font-weight="600">向量数据库</text>
+  <text x="585" y="565" text-anchor="middle" font-size="11" fill="#8b949e">Embedding 索引</text>
+  <rect x="675" y="490" width="180" height="80" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="683" y1="491" x2="847" y2="491" stroke="rgba(255,255,255,0.25)"/>
+  <g stroke="rgba(188,140,255,0.65)" stroke-width="1.2"><line x1="757" y1="515" x2="783" y2="509"/><line x1="757" y1="515" x2="783" y2="524"/><line x1="783" y1="509" x2="783" y2="524"/></g>
+  <circle cx="757" cy="515" r="8" fill="rgba(188,140,255,0.15)" stroke="rgba(188,140,255,0.65)"/>
+  <circle cx="783" cy="509" r="8" fill="rgba(188,140,255,0.15)" stroke="rgba(188,140,255,0.65)"/>
+  <circle cx="783" cy="524" r="8" fill="rgba(188,140,255,0.15)" stroke="rgba(188,140,255,0.65)"/>
+  <text x="775" y="548" text-anchor="middle" font-size="14" font-weight="600">知识图谱库</text>
+  <text x="775" y="565" text-anchor="middle" font-size="11" fill="#8b949e">Graph Facts</text>
+  <text x="685" y="590" text-anchor="middle" font-size="11" fill="#8b949e" opacity="0.85">离线：文档 → 切片 → 向量化 → 入库</text>
+  <rect x="130" y="690" width="150" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="138" y1="691" x2="272" y2="691" stroke="rgba(255,255,255,0.25)"/>
+  <text x="205" y="731" text-anchor="middle" font-size="14" font-weight="600">API 调用</text>
+  <text x="205" y="749" text-anchor="middle" font-size="11" fill="#8b949e">REST / RPC</text>
+  <rect x="320" y="690" width="150" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="328" y1="691" x2="462" y2="691" stroke="rgba(255,255,255,0.25)"/>
+  <text x="395" y="731" text-anchor="middle" font-size="14" font-weight="600">代码执行</text>
+  <text x="395" y="749" text-anchor="middle" font-size="11" fill="#8b949e">Python / Shell</text>
+  <rect x="510" y="690" width="150" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="518" y1="691" x2="652" y2="691" stroke="rgba(255,255,255,0.25)"/>
+  <text x="585" y="731" text-anchor="middle" font-size="14" font-weight="600">搜索 / 检索</text>
+  <text x="585" y="749" text-anchor="middle" font-size="11" fill="#8b949e">Web · 知识库</text>
+  <rect x="710" y="690" width="150" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="718" y1="691" x2="852" y2="691" stroke="rgba(255,255,255,0.25)"/>
+  <text x="785" y="731" text-anchor="middle" font-size="14" font-weight="600">文件 / 数据</text>
+  <text x="785" y="749" text-anchor="middle" font-size="11" fill="#8b949e">File · 数据库</text>
+  <g stroke="#f78166" stroke-width="1.6" opacity="0.9"><line x1="197" y1="705" x2="211" y2="705"/><line x1="213" y1="711" x2="199" y2="711"/></g>
+  <path d="M 196 702 L 192 705 L 196 708 Z" fill="#f78166"/><path d="M 214 708 L 218 711 L 214 714 Z" fill="#f78166"/>
+  <polyline points="388,701 394,707 388,713" fill="none" stroke="#f78166" stroke-width="1.6" opacity="0.9"/>
+  <line x1="398" y1="713" x2="406" y2="713" stroke="#f78166" stroke-width="1.6" opacity="0.9"/>
+  <circle cx="581" cy="704" r="6" fill="none" stroke="#f78166" stroke-width="1.6" opacity="0.9"/>
+  <line x1="585" y1="708" x2="591" y2="714" stroke="#f78166" stroke-width="1.6" opacity="0.9"/>
+  <path d="M 779 700 h 14 l 5 5 v 12 h -19 z" fill="none" stroke="#f78166" stroke-width="1.6" opacity="0.9"/>
+  <line x1="783" y1="709" x2="790" y2="709" stroke="#f78166" stroke-width="1.4" opacity="0.9"/>
+  <line x1="783" y1="713" x2="794" y2="713" stroke="#f78166" stroke-width="1.4" opacity="0.9"/>
+  <rect x="660" y="815" width="180" height="52" rx="12" fill="rgba(88,166,255,0.10)" stroke="rgba(88,166,255,0.5)"/>
+  <line x1="668" y1="816" x2="832" y2="816" stroke="rgba(88,166,255,0.35)"/>
+  <text x="750" y="838" text-anchor="middle" font-size="14" font-weight="600">最终响应</text>
+  <text x="750" y="857" text-anchor="middle" font-size="11" fill="#8b949e">Answer / Action</text>
+  <rect x="110" y="812" width="450" height="68" rx="12" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" data-graph-role="legend"/>
+  <text x="127" y="833" font-size="11" fill="#8b949e">图例</text>
+  <line x1="185" y1="846" x2="212" y2="846" stroke="#58a6ff" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+  <text x="222" y="850" font-size="11" fill="#8b949e">数据流</text>
+  <line x1="295" y1="846" x2="322" y2="846" stroke="#f78166" stroke-width="1.8" marker-end="url(#arr-orange)"/>
+  <text x="332" y="850" font-size="11" fill="#8b949e">工具调用</text>
+  <line x1="420" y1="846" x2="447" y2="846" stroke="#3fb950" stroke-width="1.6" marker-end="url(#arr-green)"/>
+  <text x="457" y="850" font-size="11" fill="#8b949e">记忆读写</text>
+  <line x1="185" y1="868" x2="212" y2="868" stroke="#bc8cff" stroke-width="1.6" marker-end="url(#arr-purple)"/>
+  <text x="222" y="872" font-size="11" fill="#8b949e">推理循环</text>
+  <line x1="295" y1="868" x2="322" y2="868" stroke="#3fb950" stroke-width="1.4" stroke-dasharray="5,3" marker-end="url(#arr-green)"/>
+  <text x="332" y="872" font-size="11" fill="#8b949e">巩固 / 离线入库</text>
+</svg>

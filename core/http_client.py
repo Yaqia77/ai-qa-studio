@@ -9,11 +9,14 @@ from loguru import logger
 class HttpExecutor:
     """HTTP 执行器（Session 复用，保持 Cookie）。"""
 
-    def __init__(self, base_url: str = "", default_headers: dict | None = None, default_timeout: float = 15):
+    def __init__(self, base_url: str = "", default_headers: dict | None = None,
+                 default_timeout: float = 15, verify_ssl: bool = True):
         self.base_url = (base_url or "").rstrip("/")
         self.default_headers = default_headers or {}
         self.default_timeout = default_timeout
         self.session = requests.Session()
+        # 测试环境自签证书/公司网络 TLS 拦截场景可关闭校验（config.yaml env.verify_ssl）
+        self.session.verify = verify_ssl
 
     def build_url(self, url: str) -> str:
         url = url.strip()

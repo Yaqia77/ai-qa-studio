@@ -5,6 +5,7 @@
   - status_code   响应状态码
   - response_text 响应原文
   - $.xxx         响应体 JSONPath（$ 为整个 body）
+  - var.xxx       变量池中的值（公共脚本的 assert 步骤常用）
 操作符: eq / neq / contains / gt / ge / lt / le / regex / not_null / len_eq
 """
 import json
@@ -21,9 +22,21 @@ class AssertPathError(Exception):
     """取值路径无法解析。"""
 
 
-def get_actual(response, path: str):
-    """按取值路径从响应中取实际值。"""
+def get_actual(response, path: str, ctx=None):
+    """按取值路径取实际值：响应类路径从 response 取，var. 前缀从变量池取。"""
     path = path.strip()
+    if path.startswith("var.") or path == "var":
+        if ctx is None:
+            raise AssertPathError("var. 路径需要变量池上下文（仅公共脚本内可用）")
+        key = path[4:].strip()
+        if not key:
+            raise AssertPathError("var. 后面缺变量名，如 var.token")
+        if not ctx.has(key):
+            available = ", ".join(ctx.all_keys()) or "无"
+            raise AssertPathError(f"变量 {key!r} 未定义（当前可用变量: {available}）")
+        return ctx.get(key)
+    if response is None:
+        raise AssertPathError(f"当前步骤之前没有请求，无法按 {path!r} 从响应取值（可改用 var.xxx 断言变量）")
     if path == "status_code":
         return response.status_code
     if path == "response_text":
@@ -39,7 +52,7 @@ def get_actual(response, path: str):
         if not matches:
             raise AssertPathError(f"JSONPath {path!r} 未匹配到任何值")
         return matches[0].value
-    raise AssertPathError(f"无法识别的取值路径 {path!r}（支持 status_code / response_text / $.开头）")
+    raise AssertPathError(f"无法识别的取值路径 {path!r}（支持 status_code / response_text / $.开头 / var.开头）")
 
 
 def run_assertions(response, rules: list, ctx) -> list:
@@ -59,7 +72,7 @@ def run_assertions(response, rules: list, ctx) -> list:
                 continue
 
         try:
-            actual = get_actual(response, path)
+            actual = get_actual(response, path, ctx)
         except AssertPathError as e:
             results.append(AssertionResult(op, path, expected, None, False, str(e)))
             continue

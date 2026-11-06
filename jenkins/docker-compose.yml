@@ -1,0 +1,28 @@
+# 本地快速起一个 Jenkins（需先安装 Docker Desktop）
+#
+# 用法（在项目根目录）:
+#   docker compose -f jenkins/docker-compose.yml up -d
+#   然后浏览器打开 http://localhost:8080
+#   初始管理员密码：docker logs jenkins 里输出的 32 位字符串（或看 /var/jenkins_home/secrets/initialAdminPassword）
+#
+# 说明：
+#   - 镜像用官方 LTS，自带 Java（无需本机另装 JDK）
+#   - 端口：8080 Web UI，50000 Agent(JNLP)
+#   - jenkins_home 用命名卷持久化，容器重建插件/任务不丢
+#   - 若要在容器里跑本项目的接口用例并生成 Allure 报告，建议用「另一个带 Python+Node 的 Agent 容器」
+#     或在 Windows 主机上装 Python/Node 后把主机挂为 Jenkins 节点（见 JENKINS-CICD.md 第三节）
+services:
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      # 如需容器内直接调用 docker（动态起构建代理），取消下一行注释（Docker in Docker）
+      # - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  jenkins_home:

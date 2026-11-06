@@ -20,7 +20,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT = ROOT / "data" / "api_cases.xlsx"
 
 CASE_HEADERS = ["用例编号", "模块", "接口名称", "用例描述", "优先级", "是否执行", "请求方式",
-                "请求路径", "请求头", "查询参数", "请求体", "变量提取", "断言", "超时(秒)"]
+                "请求路径", "请求头", "查询参数", "请求体", "变量提取", "断言", "超时(秒)",
+                "前置脚本", "后置脚本"]
 
 # 每行字段顺序与 CASE_HEADERS 一致；JSON 列写紧凑 JSON 文本
 DEMO_CASES = [
@@ -74,7 +75,7 @@ GUIDE_SECTIONS = [
         ["模块", "是", "模块名，用于报告分组与 --module 筛选"],
         ["接口名称", "是", "接口的业务名称"],
         ["用例描述", "是", "一句话描述本用例验证点"],
-        ["优先级", "是", "P0/P1/P2/P3"],
+        ["优先级", "是", "P0/P1/P2/P3/P4/P5"],
         ["是否执行", "是", "Y 执行 / N 跳过（报告中显示 skipped）"],
         ["请求方式", "是", "GET/POST/PUT/DELETE/PATCH"],
         ["请求路径", "是", "http 开头的完整 URL 直接使用；相对路径会拼接 config.yaml 的 base_url，支持 {{变量}}"],
@@ -84,10 +85,12 @@ GUIDE_SECTIONS = [
         ["变量提取", "否", 'JSON 对象：{"变量名":"$.data.token"}，从响应体按 JSONPath 提取，供后续用例引用'],
         ["断言", "是", "JSON 数组，见下方断言语法；期望值支持 {{变量}}"],
         ["超时(秒)", "否", "正数；缺省使用 config.yaml 中的 timeout"],
+        ["前置脚本", "否", "逗号分隔的公共脚本名，在主请求之前按序执行（任一步失败即中断，主请求不发）"],
+        ["后置脚本", "否", "逗号分隔的公共脚本名，无论主流程成败都在最后执行（用于清理造出的数据）"],
     ]),
     ("二、断言语法", [
         ["格式", "", '[["操作符","取值路径","期望值"], ...]，多条断言全部通过才算通过'],
-        ["取值路径", "", "status_code=响应状态码；response_text=响应原文；$.xxx=响应体 JSONPath（$ 为整个 body）"],
+        ["取值路径", "", "status_code=响应状态码；response_text=响应原文；$.xxx=响应体 JSONPath（$ 为整个 body）；var.xxx=变量池取值"],
         ["eq / neq", "", "相等 / 不等（数字与字符串会自动智能比较，如 200 与 \"200\" 视为相等）"],
         ["contains", "", "包含：字符串为子串包含；列表为成员包含"],
         ["gt / ge / lt / le", "", "数值大于/大于等于/小于/小于等于"],
@@ -108,6 +111,7 @@ GUIDE_SECTIONS = [
         ["2", "", "实际使用时：替换为被测系统接口；域名可配置到 config.yaml 的 base_url，用例里只写相对路径"],
         ["3", "", "删除演示用例后保留表头即可；新增用例直接在表格末尾追加一行"],
         ["4", "", "运行方式：python main.py（详见项目 README 或 main.py 文件头注释）"],
+        ["5", "", "公共脚本：在平台「公共脚本」页维护（存 data/scripts.json），步骤只支持 request/sleep/set_var/assert 四种声明式动作，不执行任意代码"],
     ]),
 ]
 
@@ -181,7 +185,7 @@ def build_workbook() -> Workbook:
             cell = ws.cell(row=row_no, column=col, value=value)
             cell.alignment = wrap
 
-    widths = [16, 14, 12, 32, 8, 9, 10, 46, 30, 16, 46, 28, 52, 9]
+    widths = [16, 14, 12, 32, 8, 9, 10, 46, 30, 16, 46, 28, 52, 9, 22, 22]
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
     ws.freeze_panes = "A2"

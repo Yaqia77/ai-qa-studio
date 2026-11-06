@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <title>UI 演示页</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; }
+    .field { margin: 12px 0; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1 id="title">接口自动化 UI 演示</h1>
+
+  <!-- 登录表单 -->
+  <form id="login-form" class="field">
+    <input id="username" type="text" placeholder="用户名" />
+    <input id="password" type="password" placeholder="密码" />
+    <select id="role">
+      <option value="dev">开发</option>
+      <option value="qa">测试</option>
+      <option value="admin">管理员</option>
+    </select>
+    <label><input id="agree" type="checkbox" /> 同意条款</label>
+    <button id="submit" type="submit">登录</button>
+  </form>
+
+  <!-- 结果区（登录后显示） -->
+  <div id="result" class="hidden">
+    <p class="welcome">欢迎，<span id="who">游客</span></p>
+    <p class="order-id">ORDER-20260101</p>
+  </div>
+
+  <!-- 五期能力演示区：覆盖新增动作/定位方言/断言/多窗口/dialog（与冒烟 tools/smoke_ui_actions.py 对应） -->
+  <section id="p5" class="field">
+    <h2>五期能力演示</h2>
+    <!-- 定位方言：testid / placeholder / alt -->
+    <div data-testid="profile-card">稳定标识卡片</div>
+    <input id="search" type="text" placeholder="搜索关键词" />
+    <img id="avatar" src="data:image/gif;base64,R0lGOD" alt="用户头像" width="24" height="24" />
+    <!-- expect_count：一组 .item（3 个） -->
+    <ul id="items">
+      <li class="item">A</li>
+      <li class="item">B</li>
+      <li class="item">C</li>
+    </ul>
+    <!-- expect_attr：带 href 的链接 -->
+    <a id="link" href="/login">跳转登录</a>
+    <!-- expect_hidden：初始不可见 -->
+    <p id="lazy" class="hidden">懒加载内容</p>
+    <!-- dblclick -->
+    <div id="dbl-target" style="cursor:pointer;padding:4px;border:1px solid #ccc">双击我</div>
+    <!-- upload：文件输入 + 回填显示名 -->
+    <input id="file" type="file" />
+    <span id="file-name"></span>
+    <!-- drag_to：源 + 目标 -->
+    <div id="drag-src" draggable="true" style="width:40px;height:40px;background:#409eff;color:#fff">拖</div>
+    <div id="drop-zone" style="width:80px;height:40px;border:2px dashed #999">放置区</div>
+    <!-- expect_enabled：可 disable/enable 的按钮 -->
+    <button id="toggle-btn" type="button">目标按钮</button>
+    <button id="disable-btn" type="button">禁用</button>
+    <button id="enable-btn" type="button">启用</button>
+    <!-- dialog：点击弹 confirm，引擎默认 accept → 显示放行结果 -->
+    <button id="confirm-btn" type="button">弹出确认框</button>
+    <span id="dialog-result"></span>
+    <!-- 新窗口：target=_blank 打开 frame 内页，供 switch_window last 断言 -->
+    <a id="open-new" href="ui_frame_inner.html" target="_blank">打开新窗口</a>
+    <!-- 显隐切换：供 wait_state visible 断言（点击后懒内容显示） -->
+    <button id="reveal-btn" type="button">显示懒内容</button>
+    <!-- storage 写入：供 storage: 提取 -->
+    <button id="store-btn" type="button">写入本地存储</button>
+  </section>
+
+  <script>
+    // 展示已登录态：显示结果区、用登录用户名回填欢迎语
+    function showLoggedIn(user) {
+      document.getElementById('who').textContent = user || '游客';
+      document.getElementById('result').classList.remove('hidden');
+    }
+    document.getElementById('login-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var u = document.getElementById('username').value || '游客';
+      showLoggedIn(u);
+      document.title = '登录后-' + u;
+      // 登录后写入一个 cookie，供 cookie: 提取验证 + storage_state 往返
+      document.cookie = 'session_token=abc123; path=/';
+      // 用户名存 localStorage，供「登录态复用」重开页面时渲染（storage_state 会带上它）
+      try { localStorage.setItem('ui_user', u); } catch (err) {}
+      // 更新 URL 片段，供 expect_url 验证
+      history.replaceState(null, '', '?logged_in=1#after-login');
+    });
+    // 开机即已登录：加载时若已有 session_token cookie（来自复用的 storage_state），直接渲染登录态，
+    // 无需再走「填账号→点登录」——这正是二期登录态复用要证明的效果。
+    window.addEventListener('load', function () {
+      if (/(?:^|; )session_token=/.test(document.cookie)) {
+        var u = '游客';
+        try { u = localStorage.getItem('ui_user') || '游客'; } catch (err) {}
+        showLoggedIn(u);
+      }
+    });
+
+    // ===== 五期能力演示区交互 =====
+    // 双击：文本变为“已双击”
+    document.getElementById('dbl-target').addEventListener('dblclick', function () {
+      this.textContent = '已双击';
+    });
+    // 上传：回填首个文件名
+    document.getElementById('file').addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      document.getElementById('file-name').textContent = f ? f.name : '';
+    });
+    // 禁用/启用：切换目标按钮 disabled（供 expect_enabled 断言）
+    document.getElementById('disable-btn').addEventListener('click', function () {
+      document.getElementById('toggle-btn').disabled = true;
+    });
+    document.getElementById('enable-btn').addEventListener('click', function () {
+      document.getElementById('toggle-btn').disabled = false;
+    });
+    // 确认框：引擎默认 accept → confirm 返回 true → 写“已放行”
+    document.getElementById('confirm-btn').addEventListener('click', function () {
+      document.getElementById('dialog-result').textContent = confirm('确认提交？') ? '已放行' : '已取消';
+    });
+    // 显隐：点击后懒内容由 hidden 变可见（供 wait_state/expect_visible）
+    document.getElementById('reveal-btn').addEventListener('click', function () {
+      document.getElementById('lazy').classList.remove('hidden');
+    });
+    // 本地存储写入（供 storage:ui_token 提取）
+    document.getElementById('store-btn').addEventListener('click', function () {
+      try { localStorage.setItem('ui_token', 'tk-p5-2026'); } catch (err) {}
+    });
+    // 拖拽：源拖到放置区后标记（drag_to 模拟 HTML5 DnD）
+    (function () {
+      var src = document.getElementById('drag-src'), zone = document.getElementById('drop-zone');
+      src.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text', 'drag'); });
+      zone.addEventListener('dragover', function (e) { e.preventDefault(); });
+      zone.addEventListener('drop', function (e) { e.preventDefault(); zone.textContent = '已接收'; });
+    })();
+  </script>
+</body>
+</html>

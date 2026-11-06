@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <title>Frame 宿主页</title>
+</head>
+<body>
+  <!-- 主文档标记：证明 switch_frame 前后定位作用于不同 target -->
+  <h1 id="host-title">宿主主文档</h1>
+  <p id="host-msg">host-main-content</p>
+
+  <!-- 内嵌 iframe：switch_frame 定位器指向 #app-frame，切入后可断言帧内元素 -->
+  <iframe id="app-frame" src="ui_frame_inner.html" width="400" height="200"></iframe>
+</body>
+</html>

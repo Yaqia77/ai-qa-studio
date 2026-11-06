@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <title>UI Flaky 演示页</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 24px; }
+    #msg { font-size: 20px; padding: 12px; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <h1>Flaky 演示：模拟站点瞬时抖动</h1>
+  <div id="msg">loading</div>
+  <script>
+    // 每次加载掷骰子：约 80% 概率直接就绪，20% 概率停留在 loading（模拟偶发环境噪声）。
+    // 配 retry 的用例：单次失败可被重试兜底转绿；报告会标注「重试 k 次后通过」，
+    // 让 flaky 可见而非被吞——这正是三期-B 重试机制的演示场景。
+    var ready = Math.random() < 0.8;
+    window.addEventListener('load', function () {
+      if (ready) {
+        document.getElementById('msg').textContent = 'ready';
+      }
+    });
+  </script>
+</body>
+</html>

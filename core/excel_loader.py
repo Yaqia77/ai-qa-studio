@@ -26,18 +26,45 @@ CASE_COLUMNS = {
     "变量提取": "extract",
     "断言": "asserts",
     "超时(秒)": "timeout",
+    "前置脚本": "pre_scripts",
+    "后置脚本": "post_scripts",
 }
 REQUIRED_HEADERS = ["用例编号", "模块", "接口名称", "用例描述", "优先级", "是否执行", "请求方式", "请求路径", "断言"]
 VALID_METHODS = {"GET", "POST", "PUT", "DELETE", "PATCH"}
-VALID_PRIORITIES = {"P0", "P1", "P2", "P3"}
+VALID_PRIORITIES = {"P0", "P1", "P2", "P3", "P4", "P5"}
 ASSERT_OPS = {"eq", "neq", "contains", "gt", "ge", "lt", "le", "regex", "not_null", "len_eq"}
 OPS_NEED_EXPECTED = ASSERT_OPS - {"not_null"}
+# 操作符中文说明（平台 meta 接口下发给前端做汉化显示，与执行引擎解耦）
+ASSERT_OP_LABELS = {
+    "eq": "等于", "neq": "不等于", "contains": "包含",
+    "gt": "大于", "ge": "大于等于", "lt": "小于", "le": "小于等于",
+    "regex": "正则匹配", "not_null": "不为空", "len_eq": "长度等于",
+}
 RUN_TRUE = {"Y", "YES", "TRUE", "是"}
 RUN_FALSE = {"N", "NO", "FALSE", "否"}
 
 
 class ExcelFormatError(Exception):
     """Excel 内容/格式不合法，message 中包含全部错误的精确位置。"""
+
+
+def split_refs(cell) -> list:
+    """脚本引用单元格 → 脚本名列表（中英文逗号分隔，去空白去重保序）。"""
+    if cell in (None, ""):
+        return []
+    text = cell if isinstance(cell, str) else str(cell)
+    out: list[str] = []
+    for part in text.replace("，", ",").split(","):
+        name = part.strip()
+        if name and name not in out:
+            out.append(name)
+    return out
+
+
+def join_refs(names) -> str | None:
+    """脚本名列表 → 单元格文本（写回 Excel 用）。"""
+    cleaned = split_refs(",".join(str(n) for n in (names or []) if str(n).strip()))
+    return ",".join(cleaned) or None
 
 
 class LoadResult:
@@ -48,10 +75,12 @@ class LoadResult:
         self.variables = variables
 
 
-def load(path) -> LoadResult:
+def load(path, allow_empty: bool = False) -> LoadResult:
     """加载用例文件；path 可为单个 .xlsx 文件或目录（目录下所有 .xlsx 合并，按文件名排序）。
 
     目录扫描会排除 secret_vars 开头的凭证文件（由 load_secret_vars 按配置单独加载）。
+    allow_empty=True：表头合法但零条用例时返回空结果而不报错（平台读取空项目文件用）；
+    执行链路（conftest/main）保持默认 False，零用例仍视为异常。
     """
     p = Path(path)
     if p.is_dir():
@@ -70,7 +99,7 @@ def load(path) -> LoadResult:
     variables: dict = {}
     for f in files:
         _load_one(f, cases, variables)
-    if not cases:
+    if not cases and not allow_empty:
         raise ExcelFormatError(f"未从 {len(files)} 个文件中解析到任何用例")
     return LoadResult(cases, variables)
 
@@ -216,6 +245,10 @@ def _parse_case(file_name, row_no, raw, field_to_col, seen_ids, errors):
     if not ok_so_far:
         return None  # 该行已有 JSON 相关错误，跳过
 
+    # 前置/后置脚本：表头为可选列，缺失时为 None（存量文件零影响）；单元格为逗号分隔的脚本名
+    pre_scripts = split_refs(raw.get("pre_scripts"))
+    post_scripts = split_refs(raw.get("post_scripts"))
+
     return TestCase(
         row=row_no,
         source=file_name,
@@ -233,7 +266,26 @@ def _parse_case(file_name, row_no, raw, field_to_col, seen_ids, errors):
         extract=extract,
         asserts=asserts,
         timeout=timeout,
+        pre_scripts=pre_scripts,
+        post_scripts=post_scripts,
     )
+
+
+def validate_case(row: dict, *, file_name: str = "inline", row_no: int = 0) -> TestCase:
+    """校验并归一化单条接口用例：入参为 Excel「用例」表一行的 {字段名: 原值} dict。
+
+    复用 load() 逐行解析的同一套规则（_parse_case），任一字段非法即抛 ExcelFormatError；
+    供引擎统一校验入口（core.engines.api.ApiEngine.validate）调用。纯附加，不改变既有 load() 行为。
+    """
+    raw = dict(row)
+    field_to_col = {f: i for i, f in enumerate(raw)}
+    errors: list[str] = []
+    case = _parse_case(file_name, row_no, raw, field_to_col, {}, errors)
+    if errors:
+        raise ExcelFormatError(_join(errors))
+    if case is None:
+        raise ExcelFormatError(_join([f"用例校验未通过（{file_name} 第{row_no}行）"]))
+    return case
 
 
 def _parse_json_object(value, field, err):
@@ -252,10 +304,16 @@ def _parse_json_object(value, field, err):
 
 
 def _parse_body(value, err):
-    """请求体：以 { 或 [ 开头时必须为合法 JSON；否则按原始文本处理。"""
+    """请求体：以 { 或 [ 开头时必须为合法 JSON；否则按原始文本处理。
+
+    已是 dict/list 的值（Agent 内联校验直接传结构化对象）原样接受，
+    绝不对容器做 str()——否则 Python repr 的单引号会让随后的 json.loads 失败。
+    """
     if value in (None, ""):
         return None
-    text = value if isinstance(value, str) else str(value)
+    if isinstance(value, (dict, list)):
+        return value
+    text = str(value)
     stripped = text.strip()
     if stripped[:1] in ("{", "["):
         try:
@@ -264,6 +322,29 @@ def _parse_body(value, err):
             err("body", f"JSON 解析失败: {e}")
             return False
     return stripped  # 非 JSON 文本，按原始字符串请求体处理
+
+
+def check_assert_rules(rules) -> list:
+    """断言规则结构校验，返回错误说明列表（空列表即全部合法）。
+
+    公开给平台侧复用（接口定义库的「断言建议」终要写进用例的断言列），
+    保证库里推荐的断言与 Excel 读取口径完全一致，不会出现「库里存得下、用例读不了」。
+    """
+    errors: list[str] = []
+    for i, rule in enumerate(rules or [], 1):
+        if not isinstance(rule, (list, tuple)) or not 2 <= len(rule) <= 3:
+            errors.append(f"第{i}条格式错误，应为 [操作符, 取值路径, 期望值]，如 [\"eq\",\"$.code\",0]")
+            continue
+        op = str(rule[0]).strip().lower()
+        if op not in ASSERT_OPS:
+            errors.append(f"第{i}条操作符 {rule[0]!r} 不支持，可用: {', '.join(sorted(ASSERT_OPS))}")
+            continue
+        if len(rule) < 3 and op in OPS_NEED_EXPECTED:
+            errors.append(f"第{i}条操作符 {op} 需要期望值")
+            continue
+        if not str(rule[1] or "").strip():
+            errors.append(f"第{i}条取值路径不能为空")
+    return errors
 
 
 def _parse_asserts(value, err):
@@ -279,20 +360,10 @@ def _parse_asserts(value, err):
     if not isinstance(rules, list) or not rules:
         err("asserts", "必须是 JSON 数组且至少一条，如 [[\"eq\",\"status_code\",200]]")
         return False
-    for i, rule in enumerate(rules, 1):
-        if not isinstance(rule, (list, tuple)) or not 2 <= len(rule) <= 3:
-            err("asserts", f"第{i}条格式错误，应为 [操作符, 取值路径, 期望值]，如 [\"eq\",\"$.code\",0]")
-            return False
-        op = str(rule[0]).strip().lower()
-        if op not in ASSERT_OPS:
-            err("asserts", f"第{i}条操作符 {rule[0]!r} 不支持，可用: {', '.join(sorted(ASSERT_OPS))}")
-            return False
-        if len(rule) < 3 and op in OPS_NEED_EXPECTED:
-            err("asserts", f"第{i}条操作符 {op} 需要期望值")
-            return False
-        if not str(rule[1] or "").strip():
-            err("asserts", f"第{i}条取值路径不能为空")
-            return False
+    msgs = check_assert_rules(rules)
+    if msgs:
+        err("asserts", msgs[0])
+        return False
     return rules
 
 

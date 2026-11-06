@@ -13,7 +13,7 @@ class TestCase:
     module: str
     api_name: str
     case_desc: str
-    priority: str                # P0~P3
+    priority: str                # P0~P5
     run: bool                    # 是否执行
     method: str
     url: str
@@ -23,6 +23,8 @@ class TestCase:
     extract: dict | None = None  # {"变量名": "$.json.path"}
     asserts: list | None = None  # [["eq", "$.code", 0], ...]
     timeout: float | None = None
+    pre_scripts: list = field(default_factory=list)   # 前置公共脚本名（Excel 逗号分隔）
+    post_scripts: list = field(default_factory=list)  # 后置公共脚本名
 
 
 @dataclass
@@ -47,4 +49,5 @@ class CaseResult:
     request_snapshot: dict = field(default_factory=dict)
     response_snapshot: dict = field(default_factory=dict)
     assertions: list = field(default_factory=list)
+    script_trace: list = field(default_factory=list)  # 公共脚本执行轨迹（前置/后置逐步结果）
     error: str = ""

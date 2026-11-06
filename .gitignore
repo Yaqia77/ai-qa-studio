@@ -12,19 +12,72 @@ reports/
 logs/
 .pytest_cache/
 
+# Jenkins/CI 工作区生成的 Allure 产物（固定目录名，不入库）
+allure-results/
+allure-report/
+
 # 敏感凭证文件（本地填写真实账号密码，不入库；模板见 data/secret_vars_template.xlsx）
 data/secret_vars.xlsx
+
+# UI 登录态 storage_state 实体文件（等同实时登录凭证，绝不入库；注册表 data/ui_sessions.json 无敏感值仍入库）
+data/ui_sessions/
+
+# 测试场景运行时数据（用户创建的场景存储，不入库）
+data/plans.json
+
+# Webhook 通知配置（用户创建的推送规则，不入库）
+data/webhooks.json
+
+# 定时任务配置（用户创建的调度计划，不入库）
+data/schedules.json
+
+# 用例依赖关系（用户配置的依赖链，不入库）
+data/dependencies.json
+
+# 平台用户账号（含密码哈希，绝不入库；首次启动自动播种默认角色）
+data/users.json
+
+# 角色权限矩阵（平台自定义的码→角色分配；缺省回落到 perm_store 代码基线）
+data/permissions.json
+
+# 公共脚本库（平台维护的前后置步骤链；缺省为空库，用例不引用即可正常运行）
+data/scripts.json
+
+# 接口定义库（平台沉淀的接口元数据与断言建议；缺省为空库，不影响用例执行）
+data/api_defs.json
+
+# 用例项目注册表（平台「用例管理」页维护的项目→Excel 映射，不入库）
+data/projects.json
+
+# 平台新建业务项目的用例文件（每个项目一个 .xlsx，由用户在页面上录入，不入库）
+data/cases/
+
+# 操作审计留痕（含请求体摘要，可能触及敏感信息，不入库）
+data/audit_logs.jsonl
 
 # Excel 打开时的临时文件
 ~$*
 
+# 配置写回的备份/临时产物（平台保存环境配置时生成，不入库）
+config/*.bak
+config/*.tmp
+
 # 本地私有文档（面试准备材料，不入库）
 docs/
+
+# 指向独立仓库 qa-agent 的本地目录联接（仅为让 IDE/文件工具直接编辑 Agent 代码，不入库）
+/qa-agent
 
 # IDE
 .idea/
 .vscode/
 
+# Qoder IDE 本地状态（本地安装的 Skill / 规则等，不入库）
+.qoder/
+
 # 系统文件
 .DS_Store
 Thumbs.db
+
+# 提交 message 临时文件（git commit -F 用完即删，不入库）
+_commit_msg.txt
