@@ -76,6 +76,11 @@ function openDrawer(step: ChatPlanStep) {
     ElMessage.info("该节点还没有草稿可编辑（生成完成后才能改）");
     return;
   }
+  // UI 节点的步骤链不适合当前平铺型表单：一期先保证展示不抛错，编辑退回提示
+  if (step.kind === "ui_case") {
+    ElMessage.info("UI 草稿请展开卡片查看完整 JSON；结构化编辑步骤将在后续版本开放");
+    return;
+  }
   editing.value = step;
   form.case_desc = String(draft.case_desc ?? step.name ?? "");
   form.priority = String(draft.priority ?? "P0");
@@ -143,14 +148,19 @@ function submit() {
 
     <div v-else class="nodes">
       <div v-for="(s, i) in steps" :key="s.case_id || s.seq" class="node-row">
-        <div class="node" :class="{ 'node--registered': s.status === 'registered' }"
+        <div class="node" :class="{ 'node--registered': s.status === 'registered', 'node--ui': s.kind === 'ui_case' }"
              :style="{ borderLeftColor: meta(s.status).color }" @click="openDrawer(s)">
           <div class="node-top">
             <span class="seq">{{ s.seq }}</span>
             <span class="node-name">{{ s.name || s.case_id }}</span>
+            <el-tag v-if="s.kind === 'ui_case'" size="small" effect="plain" type="warning">UI</el-tag>
             <el-tag :type="meta(s.status).tag" size="small" effect="light">{{ meta(s.status).label }}</el-tag>
           </div>
-          <div class="node-api">
+          <div v-if="s.kind === 'ui_case'" class="node-api">
+            <el-tag size="small" effect="plain">步骤 {{ s.step_count ?? 0 }}</el-tag>
+            <code>{{ s.case_id }}</code>
+          </div>
+          <div v-else class="node-api">
             <el-tag size="small" effect="plain" type="info">{{ s.method }}</el-tag>
             <code>{{ s.url }}</code>
           </div>
@@ -214,6 +224,7 @@ function submit() {
 }
 .node:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
 .node--registered { background: #f6fbf3; }
+.node--ui { border-left-color: #e6a23c; }
 .node-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .seq {
   width: 20px; height: 20px; border-radius: 50%; background: #409eff; color: #fff;

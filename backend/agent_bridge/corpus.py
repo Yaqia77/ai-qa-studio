@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """知识库语料导出：把接口定义 / 存量用例转成统一记录形状（设计文档 4.2 / 4.3）。
 
-当前只导出两域：
+当前导出三域：
 - **D1 契约域**：来自 `data/api_defs.json`（`api_def_store.list_defs`），一个接口一块；
-- **D2 用例域**：来自各接口项目的 Excel（`core.excel_loader`），一条用例一块。
+- **D2 用例域**：来自各接口项目的 Excel（`core.excel_loader`），一条用例一块；
+- **D2' UI 用例域**：来自各 UI 项目的 JSON（`backend.ui.ui_case_store`），一条用例一块，
+  供 Agent 生成 UI 用例时做风格样板与变量池（步骤序列渲染成中文动作句，检索召回友好）。
 
 为什么在这里拼自然语言正文，而不是直接把结构化 JSON 丢给 Agent：
 知识库是被检索、被塞进 prompt 的，`{"op":"eq","path":"status_code"}` 这种写法
@@ -30,8 +32,8 @@ ROOT = Path(__file__).resolve().parents[2]
 PLATFORM = "interface-auto"
 
 # 平台能导出的域；其余域（执行/业务/规范）结构预留，导出为空但明确标注 unsupported
-EXPORTABLE_DOMAINS = ("contract", "case")
-ALL_DOMAINS = ("contract", "case", "execution", "business", "convention")
+EXPORTABLE_DOMAINS = ("contract", "case", "ui_case")
+ALL_DOMAINS = ("contract", "case", "ui_case", "execution", "business", "convention")
 
 # 断言操作符中文语义（与用例编辑页口径一致，供语料正文复用）
 _ASSERT_DESC = {
@@ -234,6 +236,104 @@ def case_records(base_url: str, since: str = "", *, project_id: str = "",
     return records
 
 
+def _ui_projects(project_id: str = "") -> list[dict]:
+    """挑出 UI 类项目（.json 载体）；接口/App 项目不属 UI 用例域。"""
+    from backend.shared import project_store  # 延迟导入避开注册期循环
+
+    projects = project_store.list_projects()
+    if project_id:
+        projects = [p for p in projects if str(p.get("id")) == project_id]
+    out = []
+    for p in projects:
+        rel = str(p.get("file") or "")
+        if str(p.get("kind") or "") != "ui" or not rel.lower().endswith(".json"):
+            continue
+        out.append(p)
+    return out
+
+
+def _render_ui_step(step: dict) -> str:
+    """单步 → 中文动作句：动作中文名来自 ui_case_store.ACTIONS（单一口径）。"""
+    from backend.ui import ui_case_store  # 延迟导入：corpus 模块不在启动路径上拉 Playwright 依赖链
+
+    action = str(step.get("action") or "").strip()
+    meta = ui_case_store.ACTIONS.get(action) or {}
+    desc = str(meta.get("desc") or action)
+    bits = [desc]
+    locator = str(step.get("locator") or "").strip()
+    if locator:
+        bits.append(f"定位器 {locator}")
+    value = step.get("value")
+    if value not in (None, "", [], {}):
+        bits.append(f"取值 {value}")
+    step_desc = str(step.get("desc") or "").strip()
+    if step_desc:
+        bits.append(step_desc)
+    return "：".join(bits[:1] + ["，".join(bits[1:])]) if len(bits) > 1 else bits[0]
+
+
+def ui_case_records(base_url: str, since: str = "", *, project_id: str = "",
+                    file: str = "") -> list[dict]:
+    """UI 用例域：一条存量 UI 用例一块，正文带中文步骤序列与提取变量。"""
+    from backend.ui import ui_case_store
+
+    if file:
+        candidates = [{"id": "", "name": "", "file": file}]
+    else:
+        candidates = _ui_projects(project_id)
+
+    records: list[dict] = []
+    for p in candidates:
+        rel = str(p.get("file") or "")
+        pid = str(p.get("id") or "")
+        path = Path(rel)
+        if not path.is_absolute():
+            path = ROOT / rel
+        if not path.is_file():
+            continue
+        updated = _iso(path.stat().st_mtime)
+        if since and updated <= since:
+            continue
+        try:
+            cases = ui_case_store.load_cases(path)
+        except Exception:  # noqa: BLE001 —— 单个坏文件不拖垮整域导出
+            continue
+        for c in cases:
+            case_id = str(c.get("case_id") or "").strip()
+            if not case_id:
+                continue
+            lines = [
+                f"模块：{c.get('module') or '未分类'}    优先级：{c.get('priority') or ''}",
+                f"用例名：{c.get('name') or ''}",
+                f"描述：{c.get('desc') or ''}",
+                f"浏览器：{c.get('browser') or 'chromium'}（无头={c.get('headless', True)}）"
+                + (f"，登录态会话：{c['session']}" if c.get("session") else ""),
+            ]
+            steps = [_render_ui_step(s) for s in (c.get("steps") or []) if isinstance(s, dict)]
+            if steps:
+                lines.append("步骤序列：\n  " + "\n  ".join(
+                    f"{i}. {t}" for i, t in enumerate(steps, 1)))
+            extract = c.get("extract") or []
+            if extract:
+                lines.append("变量提取：" + "; ".join(
+                    f"{e.get('var')}={e.get('source')}" for e in extract if isinstance(e, dict)))
+            records.append({
+                "kb_id": _kb_id("ui_case", pid or rel, case_id),
+                "domain": "ui_case",
+                "platform": PLATFORM,
+                "project_id": pid,
+                "source_type": "ui_json_case",
+                "source_uri": f"{base_url}/api/ui-cases/{quote(case_id, safe='')}"
+                              f"?file={quote(rel, safe='')}",
+                "title": f"{case_id} {c.get('name') or c.get('desc') or ''}".strip(),
+                "text": "\n".join(lines),
+                "tags": [t for t in [str(c.get("module") or ""), str(c.get("priority") or "")] if t],
+                "version": 1,
+                "updated_at": updated,
+            })
+    return records
+
+
 def export_domain(domain: str, base_url: str, *, since: str = "",
                   project_id: str = "", file: str = "") -> list[dict]:
     """按域导出记录。domain 合法但暂未实现 → 返回空（不误报错误，也不假装有权重数据）。"""
@@ -241,6 +341,8 @@ def export_domain(domain: str, base_url: str, *, since: str = "",
         return contract_records(base_url, since=since)
     if domain == "case":
         return case_records(base_url, since=since, project_id=project_id, file=file)
+    if domain == "ui_case":
+        return ui_case_records(base_url, since=since, project_id=project_id, file=file)
     if domain in ALL_DOMAINS:
         return []  # execution/business/convention：结构预留，导出为空
     raise ValueError(f"未知语料域 {domain!r}（可用: {list(ALL_DOMAINS)}）")

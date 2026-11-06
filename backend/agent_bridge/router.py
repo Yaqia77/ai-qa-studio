@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from backend.agent_bridge import case_gate, corpus as corpus_mod
+from backend.agent_bridge import case_gate, corpus as corpus_mod, ui_case_gate
 from backend.shared import authz
 from core.context import load_config
 
@@ -81,3 +81,21 @@ def commit_cases(body: case_gate.CaseGenerateBody,
     meta（origin/trace_id）原样回显：审计中间件记录的请求体摘要据此可检 AI 对话落库。"""
     _guard_enabled()
     return case_gate.commit(body.cases, project_id=body.project_id, file=body.file, meta=body.meta)
+
+
+# ---- UI 用例轨道：校验口径换 ui_case_store，目标必须是 kind=ui 项目的 JSON 文件 ----
+
+@router.post("/ui-cases/preview", summary="UI 用例草稿权威校验（不落库，逐条返回校验报告）")
+def preview_ui_cases(body: case_gate.CaseGenerateBody,
+                    _: dict = Depends(authz.require_perm("case:write"))) -> dict:
+    """Agent 产出的 UI 用例草稿先过平台 ui_case_store 口径校验，人确认后才谈落库。"""
+    _guard_enabled()
+    return ui_case_gate.preview(body.cases, project_id=body.project_id, file=body.file)
+
+
+@router.post("/ui-cases/commit", summary="确认后的 UI 用例落库（整批先权威校验，通过才原子写 JSON；编号冲突自动递增改名）")
+def commit_ui_cases(body: case_gate.CaseGenerateBody,
+                   _: dict = Depends(authz.require_perm("case:write"))) -> dict:
+    """与接口用例 commit 同语义：任一非法整批拒绝；编号已存在自动让号改名并回带映射。"""
+    _guard_enabled()
+    return ui_case_gate.commit(body.cases, project_id=body.project_id, file=body.file, meta=body.meta)

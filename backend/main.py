@@ -1,4 +1,4 @@
-"""interface-auto 平台后端入口（FastAPI）。
+"""ai-qa-studio 平台后端入口（FastAPI）。
 
 启动（项目根目录）:
     .venv/Scripts/python.exe -m uvicorn backend.main:app --reload --port 8000

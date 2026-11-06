@@ -68,11 +68,6 @@ const input = ref("");
 const streamBox = ref<HTMLElement | null>(null);
 
 /* ---------------- 多会话并行：每个会话一份独立视图，后台流继续写入互不干扰 ---------------- */
-interface QueueItem {
-  message: string;
-  patch?: { case_id: string; body: Record<string, unknown> };
-  files: { name: string; content: string }[];
-}
 interface SessionView {
   key: string;                          // views 里的键：新会话用临时键，done 后搬到真实 sid
   sid: string;                          // 后端 session_id（新会话未落定时为空）
@@ -91,6 +86,11 @@ interface SessionView {
   abortCtl: AbortController | null;
   turnStart: number;
   elapsed: number;                      // 本轮耗时（思考过程块头部“处理中 Xs”）
+}
+interface QueueItem {
+  message: string;
+  patch?: { case_id: string; body: Record<string, unknown> };
+  files: AttachedFile[];
 }
 function makeView(key: string, sid = ""): SessionView {
   return { key, sid, messages: [], steps: [], drafts: {}, citationsMap: {}, activity: "", busy: false,
@@ -114,15 +114,44 @@ const sid = computed(() => cur.value.sid);
 const elapsedSec = computed(() => cur.value.elapsed);
 
 /* ---------------- 接口文档附件（上传 → 本轮对话携带） ---------------- */
-const attachedFiles = ref<{ name: string; content: string }[]>([]);
+interface AttachedFile {
+  name: string;
+  /** 文本附件正文（与 data_b64 二选一） */
+  content?: string;
+  /** 图片附件 MIME（与 content 二选一） */
+  mime?: string;
+  /** 图片 base64（不含 data: 前缀） */
+  data_b64?: string;
+}
+const attachedFiles = ref<AttachedFile[]>([]);
 const MAX_ATTACH = 5;            // 与后端 doc_generate.MAX_ATTACHMENTS 同口径
-const MAX_ATTACH_BYTES = 2_000_000;  // 与后端单附件 2MB 上限同口径
+const MAX_ATTACH_BYTES = 2_000_000;  // 与后端单文本附件 2MB 上限同口径
+const MAX_IMAGE_BYTES = 3_000_000;   // 图片 base64 后≈ 4MB；与后端 MAX_IMAGE_B64_BYTES 对齐
 
 function onFilePick(uploadFile: UploadFile) {
   const raw = uploadFile.raw;
   if (!raw) return;
   if (attachedFiles.value.length >= MAX_ATTACH) {
-    ElMessage.warning(`单轮最多 ${MAX_ATTACH} 份文档，请分批发送`); return;
+    ElMessage.warning(`单轮最多 ${MAX_ATTACH} 份附件，请分批发送`); return;
+  }
+  const isImage = /^image\//i.test(raw.type || "");
+  if (isImage) {
+    if (raw.size > MAX_IMAGE_BYTES) {
+      ElMessage.warning(`「${raw.name}」超过 3MB，请压缩后再传`); return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result ?? "");
+      // FileReader.readAsDataURL 回"data:<mime>;base64,<payload>"；只取 payload，mime 从文件拿
+      const comma = dataUrl.indexOf(",");
+      if (comma < 0) { ElMessage.warning(`「${raw.name}」读取失败`); return; }
+      const payload = dataUrl.slice(comma + 1);
+      if (!payload) { ElMessage.warning(`「${raw.name}」内容为空`); return; }
+      attachedFiles.value = [...attachedFiles.value, { name: raw.name, mime: raw.type, data_b64: payload }];
+    };
+    reader.onerror = () => ElMessage.error(`读取「${raw.name}」失败`);
+    reader.readAsDataURL(raw);
+    return;
   }
   if (raw.size > MAX_ATTACH_BYTES) {
     ElMessage.warning(`「${raw.name}」超过 2MB 上限，请拆分后再传`); return;
@@ -155,8 +184,10 @@ const modelOptions = computed(() =>
 const canvasOpen = ref(false);
 
 async function loadProjects() {
-  projects.value = (await api.listProjects()).filter((p) => p.kind === "api");
-  project.value = projects.value[0] ?? null;
+  // AI 助手同时支持接口轨道与 UI 轨道：filter 保留两种 kind（app 未接入故不包含）
+  projects.value = (await api.listProjects()).filter((p) => p.kind === "api" || p.kind === "ui");
+  // 作用域降级为过滤器：默认「不限项目」（project=null），需要时用户再显式选定
+  project.value = null;
 }
 
 async function checkAgent() {
@@ -192,9 +223,10 @@ function newViewWithWelcome(): SessionView {
     id: ++msgSeq, role: "agent", kind: "text",
     text: "你好！我是测试平台的智能助手，即问即答——日常沟通、测试答疑都可以直接问我，例如：\n" +
       "· 「这个接口应该测哪些场景」「帮我看看这段断言写得对不对」\n" +
-      "· 「给『统一相册列表(分页)』生成 5 条用例」 · 「基于 AL-01 补全断言」 · 「再扩展三条同风格的」\n" +
+      "· 「给搜索接口生成 5 条用例」 · 「基于 AL-01 补全断言」 · 「再扩展三条同风格的」\n" +
       "· 也可以点输入框的「接口文档」（OpenAPI/Swagger/自由格式），一键登记接口并生成用例\n" +
-      "需要产出用例时，会自动走平台权威校验后写入用例管理，无需指定项目。",
+      "能力范围：当前支持「接口 / Web」两类用例生成，APP 用例在规划中；默认不限项目，\n" +
+      "需要落到指定项目时可选顶部项目框，或直接在对话里说明项目名（以对话意图为准）。",
   });
   return v;
 }
@@ -242,6 +274,81 @@ async function removeSession(id?: string) {
   }
   await loadSessions();
   ElMessage.success("会话已删除");
+}
+
+/* ---------------- 会话多选批量删除（管理态） ---------------- */
+const managing = ref(false);
+const selectedIds = ref<Set<string>>(new Set());
+const selectedCount = computed(() => selectedIds.value.size);
+const allSelected = computed(() =>
+  sessions.value.length > 0 && sessions.value.every((s) => selectedIds.value.has(s.id)));
+
+function toggleManage() {
+  managing.value = !managing.value;
+  if (!managing.value) selectedIds.value = new Set();   // 退出管理态清空选择
+}
+
+function isSelected(id: string): boolean {
+  return selectedIds.value.has(id);
+}
+
+function toggleSelect(id: string) {
+  const s = new Set(selectedIds.value);
+  if (s.has(id)) s.delete(id); else s.add(id);
+  selectedIds.value = s;
+}
+
+function toggleSelectAll() {
+  selectedIds.value = allSelected.value
+    ? new Set()
+    : new Set(sessions.value.map((s) => s.id));
+}
+
+function invertSelection() {
+  const s = new Set(sessions.value.map((x) => x.id));
+  for (const id of selectedIds.value) s.delete(id);
+  selectedIds.value = s;
+}
+
+async function removeSelected() {
+  const ids = [...selectedIds.value];
+  if (!ids.length) { ElMessage.info("请先勾选要删除的会话"); return; }
+  try {
+    await ElMessageBox.confirm(
+      `确认删除选中的 ${ids.length} 条会话？仅删除 Agent 侧历史，已生成的用例不受影响，且不可恢复。`,
+      "批量删除会话", { type: "warning", confirmButtonText: "删除", cancelButtonText: "取消" });
+  } catch { return; }   // 用户取消
+  const res = await api.agentChatDeleteMany(ids);
+  let activeRemoved = false;
+  for (const del of res.deleted) {
+    const v = views[del];
+    if (v) {
+      v.turnSeq++; v.abortCtl?.abort(); v.abortCtl = null;   // 中止该会话的进行中流
+      if (v.key === activeKey.value) activeRemoved = true;
+      delete views[del];
+    }
+  }
+  if (activeRemoved) newSession();   // 当前会话被删：新建一个空会话顶上
+  if (res.missing.length) ElMessage.warning(`${res.missing.length} 条会话已不存在，已跳过`);
+  selectedIds.value = new Set();
+  managing.value = false;
+  await loadSessions();
+  ElMessage.success(`已删除 ${res.deleted.length} 条会话`);
+}
+
+/** 回答时间相对化：今天 HH:MM / 昨天 / N 天前 / 日期（无值或存量回退空串） */
+function fmtAnswerTime(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const dayDiff = Math.round((startOfDay(new Date()) - startOfDay(d)) / 86_400_000);
+  if (dayDiff <= 0) {
+    return `今天 ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  }
+  if (dayDiff === 1) return "昨天";
+  if (dayDiff < 7) return `${dayDiff} 天前`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /* ---------------- 事件分派 → 渲染（全部面向视图：切走后事件仍写回自己会话） ---------------- */
@@ -446,7 +553,7 @@ function bindSid(v: SessionView, newSid: string) {
 }
 
 async function runTurn(v: SessionView, message: string, patch?: { case_id: string; body: Record<string, unknown> },
-                       files: { name: string; content: string }[] = []) {
+                       files: AttachedFile[] = []) {
   flushTyping(v);   // 上一轮若还在揭示，先补全收尾，避免新旧气泡串字
   v.messages.push({ id: ++msgSeq, role: "user", kind: "text", text: message, files: files.map((f) => f.name) });
   v.busy = true;
@@ -466,6 +573,8 @@ async function runTurn(v: SessionView, message: string, patch?: { case_id: strin
         platform: "interface-auto",
         project_id: project.value?.id ?? "",
         auto_register: autoRegister.value,
+        // 项目 kind=ui 时显式声明 UI 轨道；非 UI 项目保持 auto（服务端仍可兼容判定）
+        case_kind: project.value?.kind === "ui" ? "ui" : "auto",
         web_search: webSearch.value,
         model: selectedModel.value || undefined,
         patch: patch ?? null,
@@ -539,6 +648,19 @@ function citeUrl(kbId: string): string {
   return cur.value.citationsMap[kbId]?.source_uri || "";
 }
 
+/** UI 轨草稿卡判定：case_ready 回带的 case 有 steps 数组即为 UI 形状（接口轨不会写 steps） */
+function isUiCase(c: Record<string, unknown> | undefined): boolean {
+  return !!c && Array.isArray((c as { steps?: unknown }).steps);
+}
+/** 步骤可读行：action 中文名取不到时退回原 action，附定位器与取值 */
+function uiStepText(s: Record<string, unknown>): string {
+  const action = String(s.action ?? "");
+  const loc = s.locator ? ` ⟨${String(s.locator)}⟩` : "";
+  const val = s.value !== undefined && s.value !== null && s.value !== "" ? ` ← ${JSON.stringify(s.value)}` : "";
+  const desc = s.desc ? `　（${String(s.desc)}）` : "";
+  return `${action}${loc}${val}${desc}`;
+}
+
 /** 极简 Markdown 渲染：先转义再替换粗体/行内代码/标题，不引入额外依赖（模型回复常带这些标记） */
 function mdLite(text: string): string {
   const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -581,16 +703,27 @@ onMounted(async () => {
       </div>
       <el-button class="rail-new" type="primary" plain :icon="Plus" @click="newSession">新建对话</el-button>
       <div class="rail-list">
-        <div v-for="s in sessions" :key="s.id" class="rail-item" :class="{ active: s.id === sid }"
-             @click="switchTo(s.id)">
-          <el-icon><ChatLineSquare /></el-icon>
+        <div v-if="managing && sessions.length" class="rail-manage-bar">
+          <el-checkbox :model-value="allSelected" :indeterminate="selectedCount > 0 && !allSelected"
+                       @change="toggleSelectAll">全选</el-checkbox>
+          <el-button size="small" text @click="invertSelection">反选</el-button>
+          <el-button size="small" type="danger" plain :icon="Delete" :disabled="!selectedCount"
+                     @click="removeSelected">删除({{ selectedCount }})</el-button>
+        </div>
+        <div v-for="s in sessions" :key="s.id" class="rail-item" :class="{ active: s.id === sid && !managing, picked: managing && isSelected(s.id) }"
+             @click="managing ? toggleSelect(s.id) : switchTo(s.id)">
+          <el-icon v-if="!managing"><ChatLineSquare /></el-icon>
+          <el-checkbox v-else :model-value="isSelected(s.id)" class="rail-check" @click.stop="toggleSelect(s.id)" />
           <span class="rail-title">{{ s.title }}</span>
-          <span class="rail-turns">{{ Math.floor(s.turns / 2) }} 轮</span>
-          <el-icon class="rail-del" title="删除会话" @click.stop="removeSession(s.id)"><Delete /></el-icon>
+          <template v-if="!managing">
+            <span class="rail-time">{{ fmtAnswerTime(s.last_answer_at || s.updated_at) }}</span>
+            <el-icon class="rail-del" title="删除会话" @click.stop="removeSession(s.id)"><Delete /></el-icon>
+          </template>
         </div>
         <div v-if="!sessions.length" class="rail-empty">暂无历史会话</div>
       </div>
       <div class="rail-foot">
+        <el-link :underline="false" @click="toggleManage">{{ managing ? "完成" : "管理会话" }}</el-link>
         <el-link :underline="false" @click="checkAgent">重新检测 Agent 状态</el-link>
       </div>
     </aside>
@@ -598,7 +731,12 @@ onMounted(async () => {
     <!-- 主列：极简顶栏 + 居中消息流 + 底部输入卡片 -->
     <div class="main">
       <div class="topbar">
-        <span class="tb-sub">日常沟通 · 测试答疑 · 用例生成，都可以在这里对话完成</span>
+        <el-select v-if="projects.length" v-model="project" size="small" class="tb-project"
+                   placeholder="全部项目（不限）" :disabled="busy" value-key="id">
+          <el-option :value="null" label="全部项目（不限）" />
+          <el-option v-for="p in projects" :key="p.id" :label="`${p.name}${p.kind === 'ui' ? '（UI）' : ''}`" :value="p" />
+        </el-select>
+        <span class="tb-sub">日常沟通 · 测试答疑 · 接口与 UI 用例生成，都可以在这里对话完成</span>
         <el-badge :value="steps.length" :hidden="!steps.length">
           <el-button size="small" :type="canvasOpen ? 'primary' : 'default'" plain
                      @click="canvasOpen = !canvasOpen">步骤画布</el-button>
@@ -652,14 +790,31 @@ onMounted(async () => {
                   {{ m.validation?.passed ? "过检 ✓" : "未过闸" }}
                 </el-tag>
                 <b>{{ m.caseId }}</b>
-                <span class="case-desc">{{ String(m.caseData?.case_desc ?? "") }}</span>
+                <span class="case-desc">{{ String(isUiCase(m.caseData) ? (m.caseData?.desc ?? m.caseData?.name ?? "") : (m.caseData?.case_desc ?? "")) }}</span>
                 <el-tag v-if="m.registered" size="small" type="success" class="reg-tag">已落库 ✓</el-tag>
                 <el-tag v-else-if="autoRegister === 'auto'" size="small" type="info" class="reg-tag">未落库</el-tag>
               </div>
-              <div class="case-api">
+              <!-- 接口轨道：method + url；UI 轨道：browser + 步骤列表 -->
+              <div v-if="!isUiCase(m.caseData)" class="case-api">
                 <el-tag size="small" effect="plain" type="info">{{ String(m.caseData?.method ?? "") }}</el-tag>
                 <code>{{ String(m.caseData?.url ?? "") }}</code>
               </div>
+              <template v-else>
+                <div class="case-api">
+                  <el-tag size="small" effect="plain" type="warning">UI</el-tag>
+                  <el-tag size="small" effect="plain" type="info">{{ String(m.caseData?.browser ?? "chromium") }}</el-tag>
+                  <el-tag size="small" effect="plain">{{ String(m.caseData?.priority ?? "P1") }}</el-tag>
+                  <code>{{ String(m.caseData?.module ?? "") }}</code>
+                </div>
+                <ol class="ui-steps">
+                  <li v-for="(s, si) in ((m.caseData?.steps ?? []) as Record<string, unknown>[])" :key="si">
+                    <code>{{ uiStepText(s as Record<string, unknown>) }}</code>
+                  </li>
+                </ol>
+                <div v-if="((m.caseData?.extract ?? []) as unknown[]).length" class="ui-extract">
+                  变量提取：<code v-for="(e, ei) in ((m.caseData?.extract ?? []) as Record<string, unknown>[])" :key="ei" class="ui-extract-item">{{ String(e.var) }} ← {{ String(e.source) }}</code>
+                </div>
+              </template>
               <ul v-if="m.validation?.problems?.length" class="problems">
                 <li v-for="(p, i) in m.validation.problems" :key="i">{{ p }}</li>
               </ul>
@@ -741,8 +896,12 @@ onMounted(async () => {
           </div>
           <div class="composer-card">
             <div v-if="attachedFiles.length" class="attach-row">
-              <el-tag v-for="(f, i) in attachedFiles" :key="f.name + i" size="small" closable type="info"
-                      @close="attachedFiles.splice(i, 1)">{{ f.name }}</el-tag>
+              <el-tag v-for="(f, i) in attachedFiles" :key="f.name + i" size="small" closable
+                      :type="f.data_b64 ? 'warning' : 'info'"
+                      @close="attachedFiles.splice(i, 1)">
+                <img v-if="f.data_b64" :src="`data:${f.mime};base64,${f.data_b64}`" class="attach-thumb" :alt="f.name" />
+                {{ f.name }}
+              </el-tag>
             </div>
             <el-input v-model="input" type="textarea" :autosize="{ minRows: 1, maxRows: 6 }" resize="none"
                       placeholder="输入任何问题：日常沟通、测试答疑，或描述要生成的用例（回车发送，Shift+回车换行；生成中发送会排队）"
@@ -760,8 +919,8 @@ onMounted(async () => {
                   </button>
                 </el-tooltip>
                 <el-upload :show-file-list="false" :auto-upload="false" :multiple="true"
-                           accept=".json,.yaml,.yml,.md,.txt" :on-change="onFilePick" action="#">
-                  <button type="button" class="tool-toggle"><el-icon><Paperclip /></el-icon>接口文档</button>
+                           accept=".json,.yaml,.yml,.md,.txt,image/*" :on-change="onFilePick" action="#">
+                  <button type="button" class="tool-toggle"><el-icon><Paperclip /></el-icon>接口文档/图片</button>
                 </el-upload>
               </div>
               <button v-if="!busy" type="button" class="send-btn"
@@ -810,12 +969,19 @@ onMounted(async () => {
 }
 .rail-item:hover { background: #eef1f6; }
 .rail-item.active { background: #e7f0fe; color: #1d63e0; }
+.rail-item.picked { background: #f2f6ff; }
 .rail-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rail-turns { font-size: 11px; color: #9aa3af; flex-shrink: 0; }
+.rail-time { font-size: 11px; color: #9aa3af; flex-shrink: 0; }
+.rail-check { flex-shrink: 0; }
 .rail-del { opacity: 0; color: #c45656; flex-shrink: 0; }
 .rail-item:hover .rail-del { opacity: 1; }
+.rail-manage-bar {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px; margin-bottom: 4px;
+  border-bottom: 1px dashed #e8ebf0; font-size: 12px;
+}
 .rail-empty { padding: 16px 8px; font-size: 12px; color: #a8b0bb; text-align: center; }
-.rail-foot { padding: 10px 14px; border-top: 1px solid #eceff4; font-size: 12px; }
+.rail-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; border-top: 1px solid #eceff4; font-size: 12px; }
 
 /* 主列 */
 .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -823,7 +989,9 @@ onMounted(async () => {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 10px 20px; border-bottom: 1px solid #eceff4; background: #fff;
 }
-.tb-sub { font-size: 12px; color: #909399; }
+.tb-sub { flex: 1; font-size: 12px; color: #909399; }
+.tb-project { width: 200px; flex-shrink: 0; }
+.tb-project :deep(.el-select__wrapper) { box-shadow: none; border: 1px solid #e3e8f0; border-radius: 8px; font-size: 12px; }
 .stream { flex: 1; overflow: auto; padding: 22px 24px; }
 .msg { display: flex; margin: 0 auto 14px; max-width: 880px; width: 100%; }
 .msg--user { justify-content: flex-end; }
@@ -881,6 +1049,11 @@ onMounted(async () => {
 .cites a { color: #409eff; margin-right: 8px; }
 .case-json { margin-top: 4px; }
 .case-json :deep(.el-collapse-item__header) { font-size: 12px; color: #909399; height: 28px; line-height: 28px; border: none; }
+.ui-steps { margin: 4px 0 6px; padding-left: 22px; font-size: 12px; color: #303133; }
+.ui-steps li { margin: 2px 0; }
+.ui-steps code { background: #f2f4f8; border-radius: 4px; padding: 1px 6px; font-family: Consolas, Monaco, monospace; font-size: 12px; word-break: break-all; }
+.ui-extract { font-size: 12px; color: #606266; margin-bottom: 6px; }
+.ui-extract-item { background: #f2f4f8; border-radius: 4px; padding: 1px 5px; margin-right: 6px; font-family: Consolas, Monaco, monospace; font-size: 11px; }
 .reg-note { margin-top: 6px; font-size: 12px; color: #e6a23c; }
 .ask-card .ask-opts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .ask-answered { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: #529b2e; }
@@ -916,7 +1089,8 @@ onMounted(async () => {
 .composer-card:focus-within { border-color: #409eff; }
 .composer-card :deep(.el-textarea__inner) { box-shadow: none; padding: 4px 6px; font-size: 14px; }
 .attach-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-.attach-row .el-tag { cursor: default; }
+.attach-row .el-tag { cursor: default; display: inline-flex; align-items: center; gap: 4px; }
+.attach-thumb { width: 22px; height: 22px; object-fit: cover; border-radius: 3px; }
 .card-tools { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
 .tool-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .tool-ctl { width: 128px; }

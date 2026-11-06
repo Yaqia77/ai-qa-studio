@@ -1,4 +1,4 @@
-"""接口自动化测试 CLI 入口。
+"""ai-qa-studio 多端自动化测试 CLI 入口。
 
 用法示例:
     python main.py                                    # 使用 default_env + data/api_cases.xlsx

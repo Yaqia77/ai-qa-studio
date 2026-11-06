@@ -1,8 +1,26 @@
-# interface-auto 接口自动化测试平台
+# ai-qa-studio · AI 驱动的多端自动化测试用例生成与执行平台
 
-Excel 驱动的接口自动化测试平台：用例写在 Excel 中，程序读取执行并生成测试报告。
-既支持命令行（v1）单机运行，也提供 Web 平台（v2，FastAPI + Vue3）：在线维护用例/接口/脚本、
-触发执行、查看历史报告、定时调度、登录与角色权限、操作审计、统计报表。数据均以 Excel/JSON 文件存储，无需数据库。
+面向**接口 / Web / APP** 三端的自动化测试平台：既能手工维护用例、批量执行并出报告，
+也内置一个独立的 AI Agent（对话式生成），把「接口文档 / 一句话需求 / 页面流程描述」直接转成
+过闸门校验的候选用例，人在环确认后落库。数据均以 Excel/JSON 文件存储，无需数据库。
+
+- **接口自动化**：Excel 驱动，命令行（v1）单机可跑，用例写在表里、程序读取执行生成报告
+- **Web（UI）自动化**：项目分型 `ui`，可视化步骤 + Playwright 解释器驱动浏览器
+- **APP 自动化**：项目分型 `app`（`.apjson` 载体），平台已具用例存储与执行；**AI 生成为规划中**
+- **AI 生成（qa-agent）**：独立服务 + 独立仓，对话式 SSE 生成接口/Web 用例，落库前必经平台权威校验
+
+## 架构总览
+
+- **双仓结构**：平台主仓（`backend/` FastAPI + `platform-web/` Vue3 + `core/` 引擎）与
+  `qa-agent/` Agent 服务仓（挂载于主仓 `./qa-agent`，各自独立 `.venv` 与 git 历史）；
+  主仓后端按 `config.yaml` 的 `agent.auto_start` 自动带起 Agent 服务（默认端口 8100）。
+- **校验闸门单一真源**：Agent 只产出候选草稿并回调平台校验，**权威判据始终在平台侧**——
+  接口走 `core/excel_loader`、UI 走 `backend/ui/ui_case_store`、APP 走 `backend/app/app_case_store`；
+  Agent 侧只做结构/引用/编号/变量的确定性预检，落库红线（降级/非权威/未过闸任中其一绝不自动落）不因「自动」松动。
+- **三类型路由**：Agent 的 `case_kind` 支持 `auto/api/ui/app` 四态——显式选择 > 对话关键词提示 >
+  项目元数据 > 接口缺省逐级判定；命中尚未装配的 `app` 生成轨时**明确降级反问**，绝不静默按接口生成。
+- **项目作用域为过滤器**：AI 助手顶栏项目选择默认「全部项目（不限）」，落库目标按
+  对话点名的项目 > 顶部选择 > 会话已记 > 反问 逐级解析；对话声明与顶部选择冲突时**以对话意图为准**并显性提示。
 
 ## 技术栈
 
@@ -16,7 +34,7 @@ Excel 驱动的接口自动化测试平台：用例写在 Excel 中，程序读�
 interface-auto/
 ├── config/config.yaml        # 环境配置（域名/超时/默认请求头/报告开关）
 ├── data/api_cases.xlsx       # 接口用例 Excel（用例/全局变量/填写说明 3 个 Sheet；即平台「默认项目」）
-├── data/cases/               # 平台新建的业务项目用例文件（每个项目一个 .xlsx，按需生成）
+├── data/cases/               # 平台新建的业务项目用例文件（每项目一个文件：接口 .xlsx / UI .json / APP .apjson，按需生成）
 ├── data/projects.json        # 用例项目注册表（平台「用例管理」页维护，已 gitignore）
 ├── data/scripts.json         # 公共脚本库（平台「公共脚本」页维护，已 gitignore）
 ├── data/api_defs.json        # 接口定义库（平台「接口定义」页维护，已 gitignore）
@@ -60,6 +78,7 @@ interface-auto/
 │   └── routers/              # 各业务接口（auth/projects/cases/api_defs/scripts/dependencies/plans/runs/schedules/secrets/notifications/audit）
 ├── platform-web/             # 平台前端（Vue3 + Element Plus + Vite，npm 子项目）
 │   └── src/views/            # 17 个页面：登录/仪表盘/用例/接口定义/公共脚本/依赖/场景/执行/报告/环境/凭证/通知/定时/统计/审计/用户/角色
+├── qa-agent/                 # 独立 AI Agent 服务仓（另仓挂载，自带 .venv）：意图路由/知识库检索/生成 skill/校验闸门适配
 ├── tools/                    # 脚手架与冒烟脚本
 │   ├── gen_template.py       # 生成/重置 Excel 用例模板
 │   ├── gen_secret.py         # 生成敏感凭证模板
@@ -288,11 +307,11 @@ CLI 侧同样生效：脚本库存 `data/scripts.json`（路径可在 config.yam
 - 底层支撑：`excel_loader.load(allow_empty=True)` 让刚建好、还未录用例的空项目文件能被正常读到空列表而非报错
   （仅平台读取链路用，执行链路 `conftest/main` 仍保持零用例视为异常）
 
-### UI 自动化用例（项目分型：api / ui）
+### UI / APP 自动化用例（项目分型：api / ui / app）
 
-项目新增 `kind` 字段：`api`（接口用例，Excel，现状）| `ui`（UI 用例，JSON，新增）。
-**一个项目 = 一个用例文件** 的架构不变，双轨并存、设施全复用（执行中心/定时任务/场景/依赖/
-Webhook/权限/环境/凭证均按 `file` 参数寻址，kind 从项目解析，零改动）。
+项目新增 `kind` 字段：`api`（接口用例，Excel，现状）| `ui`（UI 用例，JSON）| `app`（APP 用例，`.apjson`）。
+**一个项目 = 一个用例文件** 的架构不变，多轨并存、设施全复用（执行中心/定时任务/场景/依赖/
+Webhook/权限/环境/凭证均按 `file` 参数寻址，kind 从项目解析，按扩展名分流：`.xlsx`→接口、`.json`→UI、`.apjson`→APP）。
 
 - **新建 UI 项目**：「用例管理」页新建项目时选类型为「UI 用例」，后端在 `data/cases/<id>.json`
   脚手架 `{"version":1,"cases":[]}`；切换到该项目后页面切换为 UI 形态（步骤列表 + 可视化步骤编辑器）
@@ -308,6 +327,14 @@ Webhook/权限/环境/凭证均按 `file` 参数寻址，kind 从项目解析，
 - **报告**：执行详情抽屉新增「UI 步骤」Tab——步骤表格（动作/定位器/结果/耗时）+ 失败步骤截图预览
   （截图经 `/api/runs/{id}/attachment/{file}` 取图，仅登录态可读图片）
 - **边界（v1）**：仅 Web（chromium），headless 默认开；不做录制、不做实时元素拾取；storage_state 留待二期
+
+**APP 轨（平台已具存储与执行，AI 生成为规划中）**：
+
+- 新建 APP 项目时选类型为「APP 用例」，后端在 `data/cases/<id>.apjson` 脚手架空库；用例读写走
+  `backend/app/app_case_store`（校验与落库口径独立于接口/UI，与 `excel_loader`/`ui_case_store` 同为单一真源）
+- 平台侧的 APP 用例存储、执行链路与报告已就位；**从对话/文档自动生成 APP 用例的生成管线尚未装配**——
+  AI 助手当前只显式声明接口/Web 两轨，若对话意图命中 APP 会明确降级反问（可选接口或 Web 继续），绝不静默误生
+- 多端一体的生成与项目作用域详细设计见 `docs/design/多形态用例生成与项目作用域设计方案.md`
 
 ## 运行参数
 
@@ -460,6 +487,10 @@ $env:IA_SVC_PASSWORD="<agent_svc 密码>" ; .venv\Scripts\python.exe tools\smoke
   `tools/init_agent_svc.py` 一次性创建（角色 `agent_svc`：只读 + `case:write` + `api:manage`，随机密码只打印一次，
   填入 qa-agent 启动环境变量 `QA_AGENT_PLATFORM_PASSWORD`，密码不落任何文件）；
   在线全链路验收：双服务启动后跑 `tools/smoke_chat.py`（对话→文档登记→落库/让号→用例回读→审计→零副作用清理）
+- AI 助手会话增强（本轮）：左栏历史会话支持**多选批量删除**（管理态全选/反选 + 二次确认，仅删 Agent 侧历史、用例不受影响）；
+  每条会话记录**回答时间**（Agent 最后回复定稿时刻，随会话持久化，列表按此倒序，存量无值回退更新时间）；顶栏项目选择
+  降为**作用域过滤器**（默认「全部项目（不限）」，对话可点名项目，冲突以对话意图为准并显性提示）；欢迎语自带**能力自述**
+  （接口/Web 可生成、APP 规划中）
 
 ## 路线图
 
@@ -481,4 +512,7 @@ $env:IA_SVC_PASSWORD="<agent_svc 密码>" ; .venv\Scripts\python.exe tools\smoke
   - [x] v2 Agent：AI 用例生成接入（独立 qa-agent 服务 + 知识库 + 校验闸门 + 「AI 生成」页，生成直连、落库过闸）
   - [x] v2 Agent 二期：对话式重构（SSE 聊天 + 步骤画布编辑闭环 + 文档一键生成 + 自动落库 meta 审计/编号让号，
     在线门禁 smoke_chat.py）
+  - [x] v2 多端：三类型用例路由（case_kind auto/api/ui/app，APP 未装配时明确降级反问）+ 项目作用域降为过滤器
+    + 会话多选批量删除/回答时间排序
+  - [ ] v2 APP 生成：APP 用例的对话/文档生成管线（当前仅平台存储与执行就位，AI 生成为规划中，详见设计文档）
 - [ ] v1.1：CI 集成（Jenkinsfile / GitHub Actions）、失败通知模板扩充

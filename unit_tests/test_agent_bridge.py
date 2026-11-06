@@ -246,7 +246,9 @@ def test_main_app_agent_router_follows_switch(monkeypatch):
 
     monkeypatch.setattr(agent_router, "agent_enabled", lambda cfg=None: True)
     importlib.reload(main)
-    assert len(agent_paths()) == 3                    # corpus + preview + commit 就位
+    paths = set(agent_paths())
+    assert len(paths) == 5                    # corpus + 接口 preview/commit + UI preview/commit 就位
+    assert {"/api/agent/ui-cases/preview", "/api/agent/ui-cases/commit"} <= paths
 
     monkeypatch.undo()
     importlib.reload(main)                      # 恢复本机真实配置形态
@@ -455,3 +457,25 @@ def test_main_app_excludes_new_agent_routes_when_disabled():
     import backend.main as main
     paths = {getattr(rt, "path", "") for rt in main.app.routes}
     assert not any(p.startswith("/api/agent") for p in paths)
+
+
+# ==================== UI 用例桥接端点：开关守护 + 透传 ====================
+
+def test_router_ui_preview_commit_未启用404(monkeypatch):
+    from backend.agent_bridge import ui_case_gate
+    body = case_gate.CaseGenerateBody(cases=[{"case_id": "UI-1"}])
+    monkeypatch.setattr(agent_router, "agent_enabled", lambda cfg=None: False)
+    for fn in (agent_router.preview_ui_cases, agent_router.commit_ui_cases):
+        with pytest.raises(HTTPException) as e:
+            fn(body, {})
+        assert e.value.status_code == 404
+
+
+def test_router_ui_preview_启用后透传闸门(monkeypatch):
+    from backend.agent_bridge import ui_case_gate
+    body = case_gate.CaseGenerateBody(cases=[{"case_id": "UI-1"}, {"case_id": "UI-2"}],
+                                      project_id="p1")
+    monkeypatch.setattr(agent_router, "agent_enabled", lambda cfg=None: True)
+    monkeypatch.setattr(ui_case_gate, "preview",
+                        lambda cases, project_id="", file="": {"ok": True, "n": len(cases)})
+    assert agent_router.preview_ui_cases(body, {}) == {"ok": True, "n": 2}

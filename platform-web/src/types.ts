@@ -876,9 +876,11 @@ export interface ChatPlanStep {
   seq: number;
   case_id: string;
   name: string;
-  kind: string;                     // api_case（当前只有用例节点）
+  kind: string;                     // api_case | ui_case（后端 build_plan 按轨道标记）
   method: string;
   url: string;
+  /** UI 节点专属：步骤条数（api 节点为 undefined） */
+  step_count?: number;
   inputs: string[];
   outputs: string[];
   status: "draft" | "registered";
@@ -902,12 +904,16 @@ export interface ChatReq {
   mode?: "auto" | "generate" | "complete" | "expand";
   count?: number;
   auto_register?: "auto" | "ask" | "off";
+  /** 生成轨道：auto=服务端按项目 kind/对话意图兜底判定；ui=显式走 UI 用例；api=显式接口用例；app=APP 用例（规划中，命中会降级反问） */
+  case_kind?: "auto" | "api" | "ui" | "app";
   /** 本轮开启联网搜索（服务端 llm.web_search_enabled 总闸放开且网关支持时才生效） */
   web_search?: boolean;
   /** 本轮使用的模型（留空用服务端缺省 chat_model；应在 /health 回带的 models 内） */
   model?: string;
   patch?: { case_id: string; body: Record<string, unknown> } | null;
-  attachments?: { name: string; content: string }[];
+  /** 附件：文本 [{name, content}]；图片 [{name, mime, data_b64}]（服务端 llm.vision_model 已配才能识别） */
+  attachments?: ({ name: string; content: string; mime?: undefined; data_b64?: undefined }
+    | { name: string; mime: string; data_b64: string; content?: undefined })[];
 }
 
 /** SSE 事件判别联合：type 到 payload 的映射与后端 EVENT_TYPES 一一对应 */
@@ -934,6 +940,8 @@ export interface ChatSessionInfo {
   project_id: string;
   turns: number;
   updated_at: string;
+  /** Agent 最后一次回复的定稿时刻（随会话持久化）；列表按此倒序，存量无值回退 updated_at */
+  last_answer_at?: string;
 }
 
 /** 会话详情（GET /v1/chat/sessions/{sid}）：刷新/换端后恢复对话与画布。
@@ -950,4 +958,6 @@ export interface ChatSessionDetail {
   plan: ChatPlanStep[];
   drafts: Record<string, Record<string, unknown>>;
   last_target: string;
+  /** 会话生效轨道：generate 后后端会写回实际值（api/ui/auto），供 modify 选预览与落库能力 */
+  case_kind?: string;
 }

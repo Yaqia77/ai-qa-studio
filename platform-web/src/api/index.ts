@@ -611,4 +611,8 @@ export const api = {
 
   agentChatDelete: (sid: string) =>
     agentHttp.delete<{ id: string }>(`/v1/chat/sessions/${encodeURIComponent(sid)}`, { silent: true }).then((r) => r.data),
+
+  /** 多选批量删除：仅删 Agent 侧历史，用例不受影响；非法/不存在的 id 归 missing 回带 */
+  agentChatDeleteMany: (ids: string[]) =>
+    agentHttp.post<{ deleted: string[]; missing: string[] }>("/v1/chat/sessions/batch-delete", { ids }, { silent: true }).then((r) => r.data),
 };
