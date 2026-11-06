@@ -373,12 +373,13 @@ env:
 细粒度权限由各接口的 `require_perm(...)` 二次校验（前端 `v-perm` 只做按钮显隐，不是安全边界）。
 
 ```bash
-# 一键启动（推荐）：平台后端 8000 + qa-agent 8100 + 前端 5173 各自独立窗口，健康探测就绪后给出访问入口；
+# 一键启动（推荐）：平台后端 8000 + 前端 5173 各自独立窗口；qa-agent 8100 由后端自动带起
+#（config.yaml `agent.auto_start: true`：端口已有监听则跳过，后端退出时自动收掉，不留孤儿进程）；
 # 重复执行安全（先清旧监听进程再拉起）；需 qa-agent 仓位于 ./qa-agent，agent_svc 密码存 logs\_svc_pw.txt（已 gitignore）
 powershell -ExecutionPolicy Bypass -File .\start_all.ps1
 # 一键停止：
 powershell -ExecutionPolicy Bypass -File .\stop_all.ps1
-# 后端（首次启动自动播种 5 个角色账号）
+# 后端（首次启动自动播种 5 个角色账号；同时自动拉起 qa-agent，无需单独启动）
 .venv\Scripts\python.exe -m uvicorn backend.main:app --reload --port 8000
 # 前端
 cd platform-web ; npm run dev
@@ -451,7 +452,8 @@ $env:IA_SVC_PASSWORD="<agent_svc 密码>" ; .venv\Scripts\python.exe tools\smoke
   左栏顶部切换项目、就地新建/重命名/删除（需 `case:write`/`case:delete`），选定后模块导航与用例读写仅作用于该项目文件
 - AI 生成（「测试管理 → AI 生成」，需 `case:write`）：对话式二期——聊天页（SSE 流式）+ 左侧步骤画布
   （节点可点开编辑、patch 回对话重过闸）+ 接口文档附件一键生成；对接独立 qa-agent 服务（另仓，
-  设 `QA_AGENT_*` 环境变量后 8100 端口启动，网关 Key 存 `localStorage.agent_key`）。
+  位于 ./qa-agent 且自带 .venv 时由平台后端自动带起，也可手动 `python -m uvicorn agent.main:app --port 8100`，
+  网关 Key 存 `localStorage.agent_key`）。
   落库红线不变：过平台权威校验才落，降级/离线自动退为人工确认；`auto` 模式落库携带
   `meta:{origin:"chat", trace_id}` 可审计检索，编号冲突平台自动递增改名（`renamed` 回带声明，绝不静默覆盖）；
   平台侧需 `config.yaml` 置 `agent.enabled=true`（缺省 false 零回归），服务账号用

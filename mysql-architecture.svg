@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 920" width="960" height="920">
+  <style>text { font-family: Inter, -apple-system, SF Pro Display, PingFang SC, Microsoft YaHei, Microsoft JhengHei, SimHei, sans-serif; fill: #f0f6fc; }</style>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117"/><stop offset="50%" stop-color="#161b22"/><stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+    <radialGradient id="glow-blue" cx="28%" cy="32%" r="45%">
+      <stop offset="0%" stop-color="rgba(88,166,255,0.14)"/><stop offset="100%" stop-color="rgba(88,166,255,0)"/>
+    </radialGradient>
+    <radialGradient id="glow-purple" cx="75%" cy="68%" r="40%">
+      <stop offset="0%" stop-color="rgba(188,140,255,0.11)"/><stop offset="100%" stop-color="rgba(188,140,255,0)"/>
+    </radialGradient>
+    <linearGradient id="text-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#bc8cff"/>
+    </linearGradient>
+    <linearGradient id="mysql-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(88,166,255,0.15)"/><stop offset="100%" stop-color="rgba(188,140,255,0.15)"/>
+    </linearGradient>
+    <filter id="node-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#58a6ff" flood-opacity="0.4"/>
+    </filter>
+    <marker id="arr-blue" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#58a6ff"/></marker>
+    <marker id="arr-blue-rev" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M10,0 L0,4 L10,8 Z" fill="#58a6ff"/></marker>
+    <marker id="arr-orange" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#f78166"/></marker>
+    <marker id="arr-orange-rev" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M10,0 L0,4 L10,8 Z" fill="#f78166"/></marker>
+    <marker id="arr-green" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#3fb950"/></marker>
+    <marker id="arr-green-rev" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M10,0 L0,4 L10,8 Z" fill="#3fb950"/></marker>
+    <marker id="arr-purple" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#bc8cff"/></marker>
+    <marker id="arr-purple-rev" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M10,0 L0,4 L10,8 Z" fill="#bc8cff"/></marker>
+  </defs>
+  <rect width="960" height="920" fill="url(#bg)"/>
+  <rect width="960" height="920" fill="url(#glow-blue)"/>
+  <rect width="960" height="920" fill="url(#glow-purple)"/>
+  <text x="480" y="46" text-anchor="middle" font-size="20" font-weight="700" fill="url(#text-grad)">MySQL 架构设计 · 自动化测试平台</text>
+  <text x="480" y="70" text-anchor="middle" font-size="12" fill="#8b949e">主从读写分离 · 六表核心模型 · 用例 / 执行 / 报告三域分治</text>
+  <!-- ===== 箭头层 ===== -->
+  <line x1="80" y1="121" x2="187" y2="121" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <line x1="280" y1="149" x2="280" y2="236" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <text x="290" y="196" font-size="11" fill="#8b949e">用例管理 · 触发执行</text>
+  <line x1="240" y1="312" x2="240" y2="436" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <text x="250" y="370" font-size="11" fill="#58a6ff">事务写入 · 状态流转</text>
+  <path d="M 505 312 L 505 412 L 255 412 L 255 436" fill="none" stroke="#3fb950" stroke-width="1.6" stroke-dasharray="5,3" opacity="0.85" marker-end="url(#arr-green)"/>
+  <text x="515" y="370" font-size="11" fill="#3fb950">Excel 一次性迁移导入</text>
+  <path d="M 740 312 L 740 424 L 360 424 L 360 436" fill="none" stroke="#bc8cff" stroke-width="1.6" opacity="0.9" marker-end="url(#arr-purple)"/>
+  <text x="750" y="370" font-size="11" fill="#bc8cff">Agent 生成用例落库</text>
+  <line x1="382" y1="480" x2="554" y2="480" stroke="#3fb950" stroke-width="1.6" stroke-dasharray="5,3" opacity="0.85" marker-end="url(#arr-green)"/>
+  <text x="468" y="470" text-anchor="middle" font-size="11" fill="#3fb950">异步复制</text>
+  <line x1="215" y1="766" x2="215" y2="698" stroke="#3fb950" stroke-width="1.6" opacity="0.9" marker-end="url(#arr-green)"/>
+  <line x1="445" y1="766" x2="445" y2="698" stroke="#3fb950" stroke-width="1.6" opacity="0.9" marker-end="url(#arr-green)"/>
+  <text x="455" y="748" font-size="11" fill="#3fb950">结果明细回写</text>
+  <line x1="685" y1="766" x2="685" y2="698" stroke="#3fb950" stroke-width="1.6" opacity="0.9" marker-end="url(#arr-green)"/>
+  <!-- ===== 容器层 ===== -->
+  <rect x="110" y="190" width="760" height="150" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="6,4" data-graph-role="container"/>
+  <text x="125" y="214" font-size="13" font-weight="600" fill="#58a6ff">应用层 · Platform Services</text>
+  <rect x="110" y="390" width="760" height="325" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="6,4" data-graph-role="container"/>
+  <text x="125" y="414" font-size="13" font-weight="600" fill="#58a6ff">MySQL · 主从部署与表模型</text>
+  <line x1="125" y1="528" x2="855" y2="528" stroke="rgba(255,255,255,0.10)" stroke-dasharray="4,4"/>
+  <text x="135" y="522" font-size="11" fill="#8b949e">部署视图</text>
+  <text x="845" y="522" text-anchor="end" font-size="11" fill="#8b949e">表模型视图</text>
+  <rect x="110" y="730" width="760" height="120" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="6,4" data-graph-role="container"/>
+  <text x="125" y="758" font-size="13" font-weight="600" fill="#f78166">执行层 · Runner 集群（结果明细回写主库）</text>
+  <!-- ===== 用户 + Web ===== -->
+  <circle cx="62" cy="104" r="9" fill="none" stroke="#f0f6fc" stroke-width="1.6"/>
+  <line x1="62" y1="113" x2="62" y2="140" stroke="#f0f6fc" stroke-width="1.6"/>
+  <line x1="48" y1="121" x2="76" y2="121" stroke="#f0f6fc" stroke-width="1.6"/>
+  <line x1="62" y1="140" x2="52" y2="156" stroke="#f0f6fc" stroke-width="1.6"/>
+  <line x1="62" y1="140" x2="72" y2="156" stroke="#f0f6fc" stroke-width="1.6"/>
+  <text x="62" y="174" text-anchor="middle" font-size="12" fill="#8b949e">用户 / CI</text>
+  <rect x="190" y="95" width="180" height="52" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="198" y1="96" x2="362" y2="96" stroke="rgba(255,255,255,0.25)"/>
+  <text x="280" y="118" text-anchor="middle" font-size="14" font-weight="600">Web 控制台</text>
+  <text x="280" y="137" text-anchor="middle" font-size="11" fill="#8b949e">用例管理 · 报告页面</text>
+  <!-- ===== 应用层节点 ===== -->
+  <rect x="130" y="240" width="220" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="138" y1="241" x2="342" y2="241" stroke="rgba(255,255,255,0.25)"/>
+  <g stroke="#58a6ff" stroke-width="1.5" opacity="0.9" fill="none"><ellipse cx="180" cy="264" rx="10" ry="4"/><path d="M 170 264 L 170 278 A 10 4 0 0 0 190 278 L 190 264"/><path d="M 170 270 A 10 4 0 0 0 190 270"/></g>
+  <text x="245" y="274" text-anchor="middle" font-size="14" font-weight="600">平台后端 · 调度中心</text>
+  <text x="245" y="296" text-anchor="middle" font-size="11" fill="#8b949e">连接池 · 事务写入 · 状态流转</text>
+  <rect x="410" y="240" width="190" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="418" y1="241" x2="592" y2="241" stroke="rgba(255,255,255,0.25)"/>
+  <g stroke="#3fb950" stroke-width="1.4" opacity="0.9" fill="none"><rect x="495" y="252" width="20" height="16" rx="2"/><line x1="498" y1="256" x2="512" y2="256"/><line x1="498" y1="260" x2="509" y2="260"/><path d="M 500 268 L 505 263 L 510 268"/></g>
+  <text x="505" y="288" text-anchor="middle" font-size="14" font-weight="600">Excel 导入解析</text>
+  <text x="505" y="303" text-anchor="middle" font-size="11" fill="#8b949e">格式校验 · 一次性迁移</text>
+  <rect x="660" y="240" width="160" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="668" y1="241" x2="812" y2="241" stroke="rgba(255,255,255,0.25)"/>
+  <path d="M 735 252 L 739 260 L 748 261 L 741 267 L 743 276 L 735 271 L 727 276 L 729 267 L 722 261 L 731 260 Z" fill="#bc8cff"/>
+  <text x="745" y="288" text-anchor="middle" font-size="14" font-weight="600">Agent 服务</text>
+  <text x="745" y="303" text-anchor="middle" font-size="11" fill="#8b949e">用例生成 · 失败分析</text>
+  <!-- ===== 部署视图 ===== -->
+  <rect x="130" y="440" width="250" height="80" rx="12" fill="url(#mysql-grad)" stroke="rgba(255,255,255,0.15)" filter="url(#node-glow)"/>
+  <rect x="136" y="446" width="238" height="68" rx="9" fill="none" stroke="#58a6ff" stroke-opacity="0.4"/>
+  <text x="255" y="472" text-anchor="middle" font-size="14" font-weight="600">master · 主库</text>
+  <text x="255" y="494" text-anchor="middle" font-size="11" fill="#8b949e">InnoDB · utf8mb4 · binlog(GTID)</text>
+  <rect x="560" y="440" width="250" height="80" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="568" y1="441" x2="802" y2="441" stroke="rgba(255,255,255,0.25)"/>
+  <text x="685" y="472" text-anchor="middle" font-size="14" font-weight="600">replica · 从库</text>
+  <text x="685" y="494" text-anchor="middle" font-size="11" fill="#8b949e">报告统计 · 历史趋势 · 只读查询</text>
+  <text x="480" y="544" text-anchor="middle" font-size="11" fill="#8b949e" opacity="0.85">写走主库 · 报告页与统计查询走从库 · 大字段（日志/截图）存对象存储，库内只存 file_url</text>
+  <!-- ===== 表模型视图 ===== -->
+  <rect x="130" y="552" width="215" height="66" rx="10" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <rect x="130" y="560" width="4" height="50" rx="2" fill="#58a6ff" opacity="0.9"/>
+  <text x="242" y="580" text-anchor="middle" font-size="13" font-weight="600" fill="#f0f6fc">t_case · 用例主表</text>
+  <text x="242" y="602" text-anchor="middle" font-size="11" fill="#8b949e">kind 区分 api/ui/app · version</text>
+  <rect x="365" y="552" width="215" height="66" rx="10" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <rect x="365" y="560" width="4" height="50" rx="2" fill="#58a6ff" opacity="0.9"/>
+  <text x="477" y="580" text-anchor="middle" font-size="13" font-weight="600" fill="#f0f6fc">t_step · 步骤断言</text>
+  <text x="477" y="602" text-anchor="middle" font-size="11" fill="#8b949e">case_id FK · seq · action</text>
+  <rect x="600" y="552" width="215" height="66" rx="10" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <rect x="600" y="560" width="4" height="50" rx="2" fill="#f78166" opacity="0.9"/>
+  <text x="712" y="580" text-anchor="middle" font-size="13" font-weight="600" fill="#f0f6fc">t_task · 执行任务</text>
+  <text x="712" y="602" text-anchor="middle" font-size="11" fill="#8b949e">state · retry · runner · trace</text>
+  <rect x="130" y="630" width="215" height="66" rx="10" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <rect x="130" y="638" width="4" height="50" rx="2" fill="#f78166" opacity="0.9"/>
+  <text x="242" y="658" text-anchor="middle" font-size="13" font-weight="600" fill="#f0f6fc">t_record · 结果明细</text>
+  <text x="242" y="680" text-anchor="middle" font-size="11" fill="#8b949e">task_id FK · status · elapsed</text>
+  <rect x="365" y="630" width="215" height="66" rx="10" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <rect x="365" y="638" width="4" height="50" rx="2" fill="#bc8cff" opacity="0.9"/>
+  <text x="477" y="658" text-anchor="middle" font-size="13" font-weight="600" fill="#f0f6fc">t_report · 报告汇总</text>
+  <text x="477" y="680" text-anchor="middle" font-size="11" fill="#8b949e">pass/fail · file_url 指向 OBS</text>
+  <rect x="600" y="630" width="215" height="66" rx="10" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <rect x="600" y="638" width="4" height="50" rx="2" fill="#bc8cff" opacity="0.9"/>
+  <text x="712" y="658" text-anchor="middle" font-size="13" font-weight="600" fill="#f0f6fc">t_env · 环境配置</text>
+  <text x="712" y="680" text-anchor="middle" font-size="11" fill="#8b949e">base_url · headers · 变量</text>
+  <text x="135" y="690" font-size="11" fill="#8b949e" opacity="0.85">用例域（蓝）</text>
+  <text x="370" y="690" font-size="11" fill="#8b949e" opacity="0.85">执行域（橙）</text>
+  <text x="605" y="690" font-size="11" fill="#8b949e" opacity="0.85">报告 / 环境域（紫）</text>
+  <!-- ===== Runner 层 ===== -->
+  <rect x="130" y="768" width="210" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="138" y1="769" x2="332" y2="769" stroke="rgba(255,255,255,0.25)"/>
+  <text x="235" y="799" text-anchor="middle" font-size="14" font-weight="600">接口 Runner</text>
+  <text x="235" y="817" text-anchor="middle" font-size="11" fill="#8b949e">REST / HTTP</text>
+  <rect x="360" y="768" width="210" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="368" y1="769" x2="562" y2="769" stroke="rgba(255,255,255,0.25)"/>
+  <text x="465" y="799" text-anchor="middle" font-size="14" font-weight="600">UI Runner</text>
+  <text x="465" y="817" text-anchor="middle" font-size="11" fill="#8b949e">Selenium / Playwright</text>
+  <rect x="600" y="768" width="210" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="608" y1="769" x2="802" y2="769" stroke="rgba(255,255,255,0.25)"/>
+  <text x="705" y="799" text-anchor="middle" font-size="14" font-weight="600">App Runner</text>
+  <text x="705" y="817" text-anchor="middle" font-size="11" fill="#8b949e">Appium / 设备集群</text>
+  <g stroke="#f78166" stroke-width="1.6" opacity="0.9" fill="none"><line x1="152" y1="780" x2="166" y2="780"/><polyline points="160,774 166,780 160,786"/></g>
+  <g stroke="#f78166" stroke-width="1.6" opacity="0.9" fill="none"><rect x="382" y="773" width="26" height="20" rx="3"/><line x1="382" y1="779" x2="408" y2="779"/><circle cx="387" cy="776" r="1.2" fill="#f78166" stroke="none"/></g>
+  <g stroke="#f78166" stroke-width="1.6" opacity="0.9" fill="none"><rect x="618" y="771" width="15" height="24" rx="3"/><line x1="622" y1="792" x2="629" y2="792"/></g>
+  <!-- ===== 图例 + 要点 ===== -->
+  <rect x="110" y="860" width="470" height="50" rx="12" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" data-graph-role="legend"/>
+  <text x="127" y="881" font-size="11" fill="#8b949e">图例</text>
+  <line x1="185" y1="875" x2="212" y2="875" stroke="#58a6ff" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+  <text x="222" y="879" font-size="11" fill="#8b949e">业务写入</text>
+  <line x1="310" y1="875" x2="337" y2="875" stroke="#3fb950" stroke-width="1.6" marker-end="url(#arr-green)"/>
+  <text x="347" y="879" font-size="11" fill="#8b949e">回写 / 迁移</text>
+  <line x1="440" y1="875" x2="467" y2="875" stroke="#bc8cff" stroke-width="1.6" marker-end="url(#arr-purple)"/>
+  <text x="477" y="879" font-size="11" fill="#8b949e">Agent 落库</text>
+  <line x1="185" y1="897" x2="212" y2="897" stroke="#3fb950" stroke-width="1.4" stroke-dasharray="5,3" marker-end="url(#arr-green)"/>
+  <text x="222" y="901" font-size="11" fill="#8b949e">主从异步复制</text>
+  <rect x="610" y="858" width="260" height="58" rx="12" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" data-graph-role="legend"/>
+  <text x="625" y="878" font-size="12" font-weight="600" fill="#58a6ff">设计要点</text>
+  <text x="625" y="896" font-size="11" fill="#8b949e">1. 写主读从 · 统计报表不挤占写入</text>
+  <text x="625" y="912" font-size="11" fill="#8b949e">2. 大文件外置 · 库内只存引用 URL</text>
+</svg>

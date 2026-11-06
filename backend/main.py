@@ -16,7 +16,7 @@ from loguru import logger
 from backend.api.routers import api_defs, cases, scripts
 from backend.agent_bridge import router as agent_bridge
 from backend.app.routers import app_cases
-from backend.shared import audit_store, authz, config_writer, scheduler, user_store
+from backend.shared import agent_launcher, audit_store, authz, config_writer, scheduler, user_store
 from backend.shared.routers import (audit, auth, dependencies, notifications,
                                     plans, projects, runs, schedules, secrets)
 from backend.shared.schemas import EnvsUpdate, HealthOut
@@ -132,9 +132,10 @@ async def _write_audit(request, response, body: bytes, user: dict | None) -> Non
 
 @app.on_event("startup")
 def _bootstrap():
-    """服务启动：播种默认用户 + 拉起 Cron 调度线程。"""
+    """服务启动：播种默认用户 + 拉起 Cron 调度线程 + 自动带起 Agent 服务（按配置，失败不拖累后端）。"""
     user_store.bootstrap()
     scheduler.start()
+    agent_launcher.start()
 
 
 @app.get("/api/health", response_model=HealthOut, tags=["系统"], summary="健康检查")

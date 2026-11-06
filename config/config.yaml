@@ -50,6 +50,9 @@ log:
 # 服务账号 agent_svc 用 tools/init_agent_svc.py 创建（只读 + case:write）。
 agent:
   enabled: true
+  auto_start: true          # 启后端时自动带起 qa-agent（端口已监听则跳过）；子进程随后端退出
+  dir: qa-agent             # qa-agent 仓库位置（相对主仓根），需其自带 .venv
+  port: 8100                # Agent 服务端口
   base_url: http://127.0.0.1:8000   # 平台自身地址，供语料 source_uri 回跳原文
   timeout: 15                        # Agent 回调平台的超时（preview/commit 使用）
   account:
