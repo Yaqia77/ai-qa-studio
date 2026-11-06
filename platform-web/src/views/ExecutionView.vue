@@ -19,7 +19,7 @@ const form = reactive({
   env: "",
   keyword: "",
 });
-// 四期并行：仅 UI 项目可选 worker 数（1=串行缺省）；接口/App 批次后端忽略该参数
+// 并行：仅 UI 项目可选 worker 数（1=串行缺省）；接口/App 批次后端忽略该参数
 const workersSel = ref(1);
 // 筛选条件可选化：优先级多选、模块单选（候选均来自所选项目的用例元数据）
 const priorityList = ref<string[]>([]);

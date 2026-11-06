@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""进程内浏览器实例池（三期-A：执行提速的核心）。
+"""进程内浏览器实例池（执行提速的核心）。
 
 现状痛点：UiRunner 每条用例独立 `sync_playwright().start() → launch → ... → 关闭`，
 100 条用例即启停 100 次 playwright + 浏览器进程——浏览器冷启动是与用例复杂度无关的
@@ -7,7 +7,7 @@
 
 本池只折叠「浏览器进程」这一层开销，**绝不折叠「context」这层隔离**：每条用例依旧
 `new_context`（可带 storage_state），cookie/localStorage/会话 attach/extract 变量池、
-base_url 解析语义与二期完全一致。
+base_url 解析语义与原先完全一致。
 
 - BrowserBundle：一个 (共享 playwright, browser) 组合 + spec_key + dead 标记，生命周期归单 pytest 进程；
 - BrowserPool：按 spec_key=(browser, headless, channel) 复用；`reap_after` 安全阀（跑满 N 条主动回收，
@@ -61,7 +61,7 @@ class BrowserBundle:
         self._on_close = on_close
 
     def new_context(self, storage_state: Optional[str] = None):
-        """用例级隔离入口：每次全新 context（可加载登录态），语义与二期逐字一致。"""
+        """用例级隔离入口：每次全新 context（可加载登录态），隔离语义与原先逐字一致。"""
         if storage_state:
             return self.browser.new_context(storage_state=storage_state)
         return self.browser.new_context()
@@ -106,7 +106,7 @@ class BrowserPool:
         self._bundles: dict[SpecKey, BrowserBundle] = {}
         self._counts: dict[SpecKey, int] = {}
         self._pw = None                        # 全池唯一 playwright 实例（懒启动）
-        self.launch_count = 0                  # 实际 launch 次数（三期验收：应等于分组数而非用例数）
+        self.launch_count = 0                  # 实际 launch 次数（验收：应等于分组数而非用例数）
 
     def _lock_for(self, spec: SpecKey) -> threading.Lock:
         with self._table_mutex:

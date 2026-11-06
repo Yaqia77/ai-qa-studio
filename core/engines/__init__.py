@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""引擎注册表：三合一统一架构的阶段 0 分流入口。
+"""引擎注册表：三合一统一架构的分流入口。
 
-用法：`engine_for_file(path)` 返回负责该用例文件的引擎（阶段 0 仍按后缀判定，与旧 main.py 一致），
-`get_engine(key)` 按标识取引擎。新增引擎（阶段 3 的 app）只需实现 Engine 子类并在此登记。
+用法：`engine_for_file(path)` 返回负责该用例文件的引擎（按后缀判定，与 main.py 一致），
+`get_engine(key)` 按标识取引擎。新增引擎（如 app）只需实现 Engine 子类并在此登记。
 """
 from __future__ import annotations
 

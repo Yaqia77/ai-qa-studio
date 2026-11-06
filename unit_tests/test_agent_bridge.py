@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """backend.agent_bridge 单元测试：语料导出形状 / 增量 / 断言语义化 / 路由开关。
 
-设计意图与门禁（设计文档 3.1、4.2、七章）：
+设计意图与门禁：
 - 语料记录必须符合统一形状且带**可回跳 source_uri**，缺一即不可信（Agent 侧校验闸门会拒收）；
-- 平台一期只导出 D1 契约 + D2 用例，其余域返回空但不报错（结构预留）；
+- 平台只导出 D1 契约 + D2 用例，其余域返回空但不报错（结构预留）；
 - **默认关闭零回归**：agent.enabled=false 时 main.app 不含 /api/agent 路由，
   且桥接端点在关闭态直接 404 —— 存量平台行为与改动前完全一致。
 
@@ -227,14 +227,32 @@ def test_router_reserved_domain_empty_200(monkeypatch, patched):
 
 # ==================== 默认关闭：存量零回归 ====================
 
-def test_main_app_excludes_agent_router_when_disabled():
-    """config.yaml 缺省 agent.enabled=false → 真实 main.app 不应挂出 /api/agent 路由。"""
+def test_main_app_agent_router_follows_switch(monkeypatch):
+    """/api/agent 注册与否只由 agent.enabled 决定：关则不挂、开则挂。
+
+    不读本机 config 实值（开发机常置 true），用 monkeypatch + reload 锁两个分支，
+    测完按真实配置恢复，不影响后续用例。
+    """
+    import importlib
+
     import backend.main as main
-    assert agent_router.agent_enabled() is False
-    assert not any(getattr(rt, "path", "").startswith("/api/agent") for rt in main.app.routes)
+    # 新版 FastAPI 把 include_router 的结果存成嵌套 _IncludedRouter，app.routes 里扫不到子路由 path，
+    # 改用 openapi 的 paths 判定（也是「端点是否对外暴露」的权威口径）
+    agent_paths = lambda: [p for p in main.app.openapi()["paths"] if p.startswith("/api/agent")]  # noqa: E731
+
+    monkeypatch.setattr(agent_router, "agent_enabled", lambda cfg=None: False)
+    importlib.reload(main)
+    assert agent_paths() == []                        # 关闭态零回归：端点不进应用
+
+    monkeypatch.setattr(agent_router, "agent_enabled", lambda cfg=None: True)
+    importlib.reload(main)
+    assert len(agent_paths()) == 3                    # corpus + preview + commit 就位
+
+    monkeypatch.undo()
+    importlib.reload(main)                      # 恢复本机真实配置形态
 
 
-# ==================== M3：preview / commit 落库闸门 ====================
+# ==================== preview / commit 落库闸门 ====================
 # 沿用纯函数风格：直接调 case_gate.preview/commit，用 monkeypatch 喂权威校验桩，
 # 不依赖 starlette.testclient（本环境未装 httpx2）。校验口径本身由 excel_loader 负责，
 # 这里锁定的是"闸门编排"：字段非法/判重/整批拒绝不落盘/编号跳过 的对外形状。
@@ -411,7 +429,7 @@ def test_commit_meta原样回显供审计关联(monkeypatch, tmp_path):
     res = case_gate.commit([{"case_id": "A-1"}], file=str(f),
                            meta={"origin": "chat", "trace_id": "t-42"})
     assert res["meta"] == {"origin": "chat", "trace_id": "t-42"}
-    # 不传 meta 的旧调用（一期表单页/冒烟）向后兼容：回空字典不报错
+    # 不传 meta 的旧调用（表单页/冒烟）向后兼容：回空字典不报错
     assert case_gate.commit([{"case_id": "A-2"}], file=str(f))["meta"] == {}
 
 
@@ -433,7 +451,7 @@ def test_router_preview_启用后透传(monkeypatch):
 
 
 def test_main_app_excludes_new_agent_routes_when_disabled():
-    """M3 新增 preview/commit 亦受默认关闭保护：存量零回归。"""
+    """preview/commit 亦受默认关闭保护：存量零回归。"""
     import backend.main as main
     paths = {getattr(rt, "path", "") for rt in main.app.routes}
     assert not any(p.startswith("/api/agent") for p in paths)

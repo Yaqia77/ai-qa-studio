@@ -71,6 +71,17 @@ def test_api_validate_rejects_bad_method():
         get_engine("api").validate(_api_row(method="TELEPORT"))
 
 
+def test_api_validate_accepts_body_as_object():
+    """Agent 内联校验传结构化 body（dict/list）必须原样接受，
+    不能被 str() 成单引号 repr 后 json.loads 失败（历史缺陷）。"""
+    case = get_engine("api").validate(
+        _api_row(method="POST", body={"albumType": 1, "userId": "{{user_id}}"}))
+    assert case.body == {"albumType": 1, "userId": "{{user_id}}"}
+    # 字符串形态仍兼容（Excel 单元格路径）
+    case2 = get_engine("api").validate(_api_row(method="POST", body='{"a": 1}'))
+    assert case2.body == {"a": 1}
+
+
 def test_web_validate_normalizes():
     cleaned = get_engine("web").validate(
         {"case_id": "ui_c1", "steps": [{"action": "goto", "value": "/login"}]})

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""二期 P5 对话式全链路在线冒烟：对话(SSE) → 文档登记 → 落库/让号 → 用例管理回读 → 清理。
+"""对话式全链路在线冒烟：对话(SSE) → 文档登记 → 落库/让号 → 用例管理回读 → 清理。
 
 与 smoke_full.py（平台主链路）互补，这里只验跨服务链路是否真通：
 
@@ -16,7 +16,7 @@
   A. doc 分支在线：OpenAPI 附件透传登记（api_def.write → /api/defs/import/openapi 真通），
      产出草稿；同时锁自动落库红线——降级(fake)产出绝不出现 registered 事件；
   B. 过检产物的落库链路：以 agent_svc 走 preview→commit（meta 审计关联）→ 用例管理回读；
-     重复编号再 commit 验证 P5 平台让号（renamed 回带，绝不静默覆盖）；
+     重复编号再 commit 验证平台让号（renamed 回带，绝不静默覆盖）；
   C. 审计留痕可按 agent_svc + meta 关键字检索；
   D. 零副作用收尾：用例/接口定义/临时项目/会话全部回收。
 

@@ -28,7 +28,7 @@ def pytest_addoption(parser):
     parser.addoption("--keyword", default=None, help="按关键字筛选（匹配 用例编号/接口名称/用例描述/URL）")
     parser.addoption("--cases", default=None, help="按用例编号精确选择，逗号分隔（优先于 --module/--priority/--keyword）")
     parser.addoption("--vars", default=None, help='运行前变量覆盖，JSON 对象字符串（覆盖同名 secret/Excel/YAML 变量，优先级低于运行时提取）')
-    parser.addoption("--workers", default=None, help="UI 批次并行 worker 数（四期：>1 时按浏览器分组×分片打 xdist_group；缺省 1=串行）")
+    parser.addoption("--workers", default=None, help="UI 批次并行 worker 数（>1 时按浏览器分组×分片打 xdist_group；缺省 1=串行）")
 
 
 def _parse_vars(raw):
@@ -240,8 +240,8 @@ def _generate_ui_cases(metafunc):
     if dep_map:
         selected = _ui_topo_order(selected, dep_map)
 
-    # 四期并行：workers>1 时按浏览器分组×分片打 xdist_group（依赖护栏在 parallel_params 内）；
-    # workers=1（缺省）走原参数化调用，收集产物与三期形状逐字节一致。
+    # 并行：workers>1 时按浏览器分组×分片打 xdist_group（依赖护栏在 parallel_params 内）；
+    # workers=1（缺省）走原参数化调用，收集产物形状不变。
     workers = _workers_opt(metafunc.config)
     if workers > 1:
         metafunc.parametrize("ui_case", parallel_params(selected, workers, dep_map))
@@ -252,7 +252,7 @@ def _generate_ui_cases(metafunc):
 def _generate_app_cases(metafunc):
     """App 用例参数化（来自项目 .apjson）：筛选与依赖拓扑口径与 UI 完全一致（run/module/priority/keyword/cases）。
 
-    阶段 3 仅搭脚手架：用例可被收集，执行由 test_app.py 统一 skip（Appium 驱动未接入）。
+    当前仅搭脚手架：用例可被收集，执行由 test_app.py 统一 skip（Appium 驱动未接入）。
     """
     file_arg = metafunc.config.getoption("--file")
     cases = _load_app_cases(file_arg)
@@ -318,7 +318,7 @@ def _ui_topo_order(selected: list, dep_map: dict) -> list:
     return ordered
 
 
-# ==================== 四期并行：分组×分片（纯函数，供单测直接喂用例列表） ====================
+# ==================== 并行：分组×分片（纯函数，供单测直接喂用例列表） ====================
 
 
 def _workers_opt(config) -> int:
@@ -473,7 +473,7 @@ def case_results():
 
 @pytest.fixture(scope="session")
 def ui_session_registry():
-    """UI 登录态会话的进程内登记表（二期复用，见设计文档步骤 4）。
+    """UI 登录态会话的进程内登记表（登录态复用）。
 
     后端批次是 subprocess 起 main.py（每批一个 pytest 进程），故「过期就地重采」只在本进程内去重：
     同一会话在本进程最多重采一次，避免一批 100 条引用同一会话的用例触发 100 次重登。
@@ -484,7 +484,7 @@ def ui_session_registry():
 
 @pytest.fixture(scope="session")
 def ui_browser_pool():
-    """UI 浏览器实例池（三期：执行提速，见《UI自动化三期》设计文档阶段 1）。
+    """UI 浏览器实例池（执行提速）。
 
     生命周期归单 pytest 进程（批次 = subprocess 起 main.py，每批一进程）：
     同 (browser, headless) 分组只 launch 一次，每条用例仅新开 context（隔离语义不变），

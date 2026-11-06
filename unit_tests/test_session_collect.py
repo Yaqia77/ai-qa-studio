@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """backend.ui.session_collect 纯逻辑单测：复用解析 / 缺失指引 / 过期就地重采去重。
 
-二期登录态「采集与复用编排」（设计文档步骤 3-4）。本模块的价值在编排逻辑，浏览器/落盘交给 UiRunner，
+登录态「采集与复用编排」。本模块的价值在编排逻辑，浏览器/落盘交给 UiRunner，
 故此处用 monkeypatch 把 collect 替换成假实现，只验证 resolve_for_attach 的判定与进程内去重，
 不依赖 Playwright。
     .venv/Scripts/python.exe -m pytest unit_tests/test_session_collect.py -v

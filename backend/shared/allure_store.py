@@ -124,7 +124,7 @@ def list_cases(results_dir: Path) -> dict:
         if isinstance(asserts, list) and asserts:
             assert_total = len(asserts)
             assert_failed = sum(1 for a in asserts if not a.get("passed"))
-        # 六期 flaky 观测：仅真发生过重试的批次才有重试轨迹附件，其余缺省 attempts=1（零额外 IO）
+        # flaky 观测：仅真发生过重试的批次才有重试轨迹附件，其余缺省 attempts=1（零额外 IO）
         retry = _ui_retry_info(results_dir, r)
         attempts = int(retry.get("attempts") or 1) if retry else 1
         retried = attempts > 1
@@ -225,10 +225,10 @@ def case_detail(results_dir: Path, case_id: str) -> dict | None:
         detail["scripts"] = mask_obj(trace) if isinstance(trace, list) else []
         # UI 步骤轨迹：接口用例无此附件返回 None；截图附件名解析为 allure source 文件名供前端取图
         detail["ui_steps"] = _ui_steps(results_dir, r)
-        # UI 重试轨迹（三期-B）：未发生重试的批次返回 None，存量报告形状不变
+        # UI 重试轨迹：未发生重试的批次返回 None，存量报告形状不变
         retry_trace = _load_json_attachment(results_dir, r, "UI重试轨迹")
         detail["ui_retry"] = mask_obj(retry_trace) if isinstance(retry_trace, dict) else None
-        # 六期失败 trace：用例最终失败留下的 trace zip 附件源文件名（供报告页下载回放）；未开启/非 UI 返回 None
+        # 失败 trace：用例最终失败留下的 trace zip 附件源文件名（供报告页下载回放）；未开启/非 UI 返回 None
         detail["trace_file"] = _find_attachment(r, "失败trace")
         return detail
     return None
@@ -259,7 +259,7 @@ def _ui_steps(results_dir: Path, result: dict):
 
 
 def _ui_retry_info(results_dir: Path, result: dict) -> dict | None:
-    """读取「UI重试轨迹」附件（三期-B）；不存在返回 None（未重试批次零额外 IO）。"""
+    """读取「UI重试轨迹」附件；不存在返回 None（未重试批次零额外 IO）。"""
     src = _find_attachment(result, "UI重试轨迹")
     if not src:
         return None

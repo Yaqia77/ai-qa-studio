@@ -8,7 +8,7 @@
 
 覆盖：
   1. 健康与登录基线
-  2. 建 UI 项目（kind=ui）→ 脚手架 .json 空表 → 列表 total=0 → meta 动作字典（五期 31 个）
+  2. 建 UI 项目（kind=ui）→ 脚手架 .json 空表 → 列表 total=0 → meta 动作字典（31 个）
   3. UI 用例 CRUD：新建/列表/详情/更新/非法(无步骤 400)/查重(409)/viewer 越权(403)/模块候选
   4. 跨 UI 项目迁移（含同项目 400）；迁移后源/目标条数正确
   5. 执行链路（需 chromium 就绪）：发起批次→轮询终态→详情含 ui_steps 步骤轨迹→
@@ -178,7 +178,7 @@ def main():
     code, resp = req("GET", "/api/ui-cases" + qf(pfile), token=ADMIN_TOK)
     check("空 UI 项目列表 total=0", code == 200 and resp.get("total") == 0, f"{code} {resp}")
     code, resp = req("GET", "/api/ui-cases/meta" + qf(pfile), token=ADMIN_TOK)
-    check("UI meta 动作字典下发（五期 31 个）+ 优先级 + chromium",
+    check("UI meta 动作字典下发（31 个）+ 优先级 + chromium",
           code == 200 and len(resp.get("actions", [])) == 31 and resp.get("priorities") and
           "chromium" in (resp.get("browsers") or []), f"{code} {resp}")
     # UI 接口拒收 Excel 项目文件（防误写）

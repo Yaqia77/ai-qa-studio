@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 VALID_PRIORITIES = {"P0", "P1", "P2", "P3", "P4", "P5"}
 VALID_BROWSERS = {"chromium", "firefox", "webkit"}
 
-# 失败重试上限（三期-B）：最多 3 次额外尝试；默认 0=不重试，保证存量行为不变。
+# 失败重试上限：最多 3 次额外尝试；默认 0=不重试，保证存量行为不变。
 MAX_RETRY = 3
 
 # 步骤动作元数据：desc 中文名；locator/value 标记该动作是否需要定位器/取值；
@@ -38,7 +38,7 @@ ACTIONS: dict[str, dict] = {
     "hover":          {"desc": "悬停",     "locator": True,  "value": False},
     "wait_for":       {"desc": "等待出现", "locator": True,  "value": False},
     "screenshot":     {"desc": "截图",     "locator": False, "value": False},  # 可选定位器：无则整页
-    # ---- 五期 P1：交互与等待补齐 ----
+    # ---- 交互与等待补齐 ----
     "right_click":    {"desc": "右键点击", "locator": True,  "value": False},
     "scroll_to":      {"desc": "滚动到元素", "locator": True, "value": False},
     "drag_to":        {"desc": "拖拽到目标", "locator": True,  "value": True, "hint": "定位器=源元素，取值=目标元素定位器（如 #drop-zone）"},
@@ -46,7 +46,7 @@ ACTIONS: dict[str, dict] = {
     "wait_load":      {"desc": "等待加载状态", "locator": False, "value": True, "hint": "load / domcontentloaded / networkidle"},
     "wait_state":     {"desc": "等待元素状态", "locator": True,  "value": True, "hint": "visible / hidden / attached / detached"},
     "sleep":          {"desc": "固定等待(毫秒)", "locator": False, "value": True, "hint": "毫秒数，如 1000（兜底硬等待，优先用显式等待）"},
-    # ---- 五期 P2：断言补齐 ----
+    # ---- 断言补齐 ----
     "expect_visible": {"desc": "断言可见", "locator": True,  "value": False},
     "expect_hidden":  {"desc": "断言不可见", "locator": True,  "value": False, "hint": "元素不可见或不存在均判通过"},
     "expect_text":    {"desc": "断言文本", "locator": True,  "value": True},
@@ -56,7 +56,7 @@ ACTIONS: dict[str, dict] = {
     "expect_enabled": {"desc": "断言可交互", "locator": True,  "value": False},
     "expect_url":     {"desc": "断言地址", "locator": False, "value": True},
     "expect_title":   {"desc": "断言标题", "locator": False, "value": True, "hint": "页面 title 需包含的文本"},
-    # ---- 五期 P4：iframe / 多标签窗口 ----
+    # ---- iframe / 多标签窗口 ----
     "switch_frame":   {"desc": "切入 iframe", "locator": True,  "value": False, "hint": "iframe 元素定位器（如 css=#app-frame）"},
     "switch_main":    {"desc": "回到主文档", "locator": False, "value": False},
     "switch_window":  {"desc": "切换标签页", "locator": False, "value": True, "hint": "页签序号（0 起）或 last（最新打开的窗口）"},
@@ -125,7 +125,7 @@ def normalize_bool(raw: object, default: bool = True) -> bool:
     return default
 
 # 定位器前缀（与 core.engines.web.engine._resolve_locator 解析口径一致）；裸选择器默认按 css 处理。
-# 五期 P3 新增 testid=/placeholder=/alt= 稳定标识方言（对应 get_by_test_id/placeholder/alt_text）。
+# testid=/placeholder=/alt= 稳定标识方言（对应 get_by_test_id/placeholder/alt_text）。
 _LOCATOR_PREFIXES = ("css=", "xpath=", "text=", "role=", "testid=", "placeholder=", "alt=")
 
 # 高频动作（新手优先展示）：其余归入「高级」；供 meta() 给步骤编辑器分组下拉。
@@ -275,7 +275,7 @@ def validate_case(raw: dict) -> dict:
     # 会话库读不到时用例仍应能被列出/保存（元数据非执行体），执行期由 session_collect 解析。
     session = str(raw.get("session") or "").strip() or None
 
-    # 失败重试次数（三期-B）：宽归一化而非拒绝——非法/负数一律收敛到 0（不重试），
+    # 失败重试次数：宽归一化而非拒绝——非法/负数一律收敛到 0（不重试），
     # 上限截断到 MAX_RETRY；默认 0 保证存量用例逐条行为不变。
     try:
         retry = max(0, min(int(raw.get("retry") or 0), MAX_RETRY))

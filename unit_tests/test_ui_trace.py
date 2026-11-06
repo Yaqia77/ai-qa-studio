@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""六期观测与诊断 · 失败 trace 采集（纯逻辑 + 假 driver，不真起浏览器）。
+"""观测与诊断 · 失败 trace 采集（纯逻辑 + 假 driver，不真起浏览器）。
 
-验收口径（设计文档 P4）：
+验收口径：
 - trace="on_failure" 且用例失败 → UiRunResult.trace_blob 收到 stop 写回的 zip 字节；
 - 用例通过 → 不留 trace_blob（显式 stop 丢弃，不触发未关闭告警）；
 - trace="off" / 采集模式 → 从不 start tracing；

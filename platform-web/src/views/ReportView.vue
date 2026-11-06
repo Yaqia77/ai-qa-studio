@@ -698,7 +698,7 @@ watch(runId, () => load());
             </el-table>
           </el-tab-pane>
           <el-tab-pane v-if="detail.ui_steps && detail.ui_steps.length" label="UI 步骤" name="ui">
-            <!-- 三期-B 重试标注：让 flaky 可见而非被吞；未重试的存量报告不出现此块 -->
+            <!-- 重试标注：让 flaky 可见而非被吞；未重试的存量报告不出现此块 -->
             <el-alert v-if="detail.ui_retry && detail.ui_retry.attempts > 1" :closable="false"
               :type="detail.ui_retry.final_ok ? 'warning' : 'error'" style="margin-bottom: 8px"
               :title="detail.ui_retry.final_ok
@@ -708,7 +708,7 @@ watch(runId, () => load());
                 第 {{ h.attempt }} 次失败：{{ h.error || "步骤未通过" }}
               </div>
             </el-alert>
-            <!-- 六期失败 trace：用例最终失败留存现场，下载后本地 show-trace 回放（未开启/通过不出现此块） -->
+            <!-- 失败 trace：用例最终失败留存现场，下载后本地 show-trace 回放（未开启/通过不出现此块） -->
             <el-alert v-if="detail.trace_file" :closable="false" type="info" style="margin-bottom: 8px">
               <div style="font-size: 12px; line-height: 1.7">
                 失败现场已留存 Playwright trace：

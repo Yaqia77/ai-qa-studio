@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""公共脚本（前后置处理器，设计文档 2.4）冒烟：定义校验 + 引擎真实执行 + Excel 无损兼容 + 引用保护。
+"""公共脚本（前后置处理器）冒烟：定义校验 + 引擎真实执行 + Excel 无损兼容 + 引用保护。
 
 用法：先启动后端（它同时是被测服务，脚本步骤会真的打它的 HTTP 接口）
     .venv\Scripts\python.exe -m uvicorn backend.main:app --port 8000

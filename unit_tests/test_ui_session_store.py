@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """backend.ui_session_store 单元测试：校验 / 状态派生 / CRUD / 原子写 / 更新作废。
 
-二期登录态数据层（设计文档《UI自动化二期-登录态复用设计方案.md》步骤 1）。
+登录态数据层。
 与执行用例（tests/ 目录，由 main.py 收集）隔离：本目录用 pytest 直接跑，不进平台批次。
     .venv/Scripts/python.exe -m pytest unit_tests/test_ui_session_store.py -v
 

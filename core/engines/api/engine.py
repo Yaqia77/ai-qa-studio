@@ -2,9 +2,9 @@
 
 链路：前置脚本 -> 变量替换 -> 发请求 -> 变量提取 -> 断言 -> 后置脚本。
 
-阶段 0（三合一底座）：原 core.runner 收进 core/engines/api/；共享基础设施
+本模块由原 core.runner 收入 core/engines/api/；共享基础设施
 （http_client/extractor/asserts/models/excel_loader/scripts）与 context/variable 仍在 core 顶层，
-故此处按 `core.` 绝对引用。行为与重构前完全一致。setup_logging 已提到 core.log_setup（两条链路共用）。
+故此处按 `core.` 绝对引用。setup_logging 已提到 core.log_setup（两条链路共用）。
 文件末尾的 ApiEngine 是注册表分流入口（见 core.engines.base）。
 """
 import json

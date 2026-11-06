@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""六期观测与诊断 · flaky 结构化字段与 trace_file（构造临时 allure-results，不依赖真实执行）。
+"""观测与诊断 · flaky 结构化字段与 trace_file（构造临时 allure-results，不依赖真实执行）。
 
-验收口径（设计文档 P4）：
+验收口径：
 - list_cases 对含「UI重试轨迹」附件的批次结构化暴露 attempts/retried/flaky；
 - flaky = 重试后通过（attempts>1 且 final_ok 且 status=passed）；重试仍失败 retried 但非 flaky；
 - 存量无重试附件的用例缺省 attempts=1/retried=False/flaky=False（报告形状向后兼容）；

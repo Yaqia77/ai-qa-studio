@@ -31,11 +31,11 @@ const router = createRouter({
       meta: { title: "用例管理" },
     },
     {
-      // AI 生成（二期对话式）：菜单级 case:write 拦截；落库红线在后端，前端只渲染事件
+      // AI 助手（对话式）：菜单级 case:write 拦截；落库红线在后端，前端只渲染事件
       path: "/agent-chat",
       name: "agent-chat",
       component: () => import("../views/AgentChatView.vue"),
-      meta: { title: "AI 生成", perm: "case:write" },
+      meta: { title: "AI 助手", perm: "case:write" },
     },
     { path: "/agent-gen", redirect: "/agent-chat" },
     {
@@ -123,7 +123,7 @@ const router = createRouter({
 });
 
 /**
- * 菜单级路由守卫（设计文档 RBAC 第一道粒度）：
+ * 菜单级路由守卫：
  * 未登录 → 登录页；登录后访问登录页 → 工作台；meta.perm 不满足 → 回工作台。
  * 后端接口仍有 require_perm 二次校验，此处仅为体验层拦截。
  */

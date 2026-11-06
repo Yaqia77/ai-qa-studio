@@ -304,10 +304,16 @@ def _parse_json_object(value, field, err):
 
 
 def _parse_body(value, err):
-    """请求体：以 { 或 [ 开头时必须为合法 JSON；否则按原始文本处理。"""
+    """请求体：以 { 或 [ 开头时必须为合法 JSON；否则按原始文本处理。
+
+    已是 dict/list 的值（Agent 内联校验直接传结构化对象）原样接受，
+    绝不对容器做 str()——否则 Python repr 的单引号会让随后的 json.loads 失败。
+    """
     if value in (None, ""):
         return None
-    text = value if isinstance(value, str) else str(value)
+    if isinstance(value, (dict, list)):
+        return value
+    text = str(value)
     stripped = text.strip()
     if stripped[:1] in ("{", "["):
         try:

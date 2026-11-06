@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""M3 生成用例落库闸门：preview（权威校验，不落盘） + commit（先校验后原子写）。
+"""生成用例落库闸门：preview（权威校验，不落盘） + commit（先校验后原子写）。
 
 为什么要单独一层，而不是让 Agent 直接拼 Excel：
 - **校验口径单一真源在平台**（设计文档 5.3）。Agent 侧闸门只做与执行引擎无关的确定性预检
@@ -10,7 +10,7 @@
 - **默认关闭 + 双重鉴权**：路由仅在 `agent.enabled=true` 时注册，端点内再校验一次；
   写权限 `case:write` 由后端 `authz` 兜底，Agent 服务账号只给只读 + case:write。
 
-二期 P5 追加（设计文档第六节 3/4 条）：
+追加说明：
 - commit 接受调用方 `meta`（origin/trace_id）并回显：审计中间件本就全量记请求体摘要，
   meta 进体后 audit 页可按 `"origin": "chat"` 检索 AI 落库（Excel 不动表结构）；
 - 编号冲突**自动递增改名**（A-01 占用 → A-02，保持补零宽度；无数字后缀则追加 -2），
@@ -137,7 +137,7 @@ def preview(cases: list[dict], *, project_id: str = "", file: str = "") -> dict:
 def commit(cases: list[dict], *, project_id: str = "", file: str = "", meta: dict | None = None) -> dict:
     """整批先权威校验，全合法才原子落库；任一非法即拒绝（不落盘）。
 
-    编号已存在不再跳过/覆盖，而是自动递增改名（P5：A-01 占用 → A-02），
+    编号已存在不再跳过/覆盖，而是自动递增改名（A-01 占用 → A-02），
     映射在响应 `renamed` 回带，由 Agent 在对话流里向人声明。
     """
     if not cases:

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""agent_svc 服务账号单元测试（设计文档 5.3 授权行落地）。
+"""agent_svc 服务账号单元测试。
 
 锁三件事：
-- 角色目录里有 agent_svc，且默认矩阵只授予 case:write + api:manage（二期文档登记最小写面）
+- 角色目录里有 agent_svc，且默认矩阵只授予 case:write + api:manage（文档登记最小写面）
   ——其余管理类权限一个都不给；
 - tools/init_agent_svc.py 幂等：重复执行不重建账号、不重置密码、矩阵不重复追加；
 - 权限落进 perm_store 后 permissions_of 只回这两个写码（读操作靠登录态，无需权限码）。

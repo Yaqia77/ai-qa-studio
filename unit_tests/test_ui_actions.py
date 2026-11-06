@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""五期能力扩展：新增动作 / 定位方言 / 断言 / target 切换 / dialog 的纯逻辑单测。
+"""能力扩展：新增动作 / 定位方言 / 断言 / target 切换 / dialog 的纯逻辑单测。
 
 全程喂假 page/locator/frame（记录调用），不真起浏览器：验证 _dispatch 调用正确的
 Playwright API、取值归一与非法中文报错、switch_frame/main/window 后 self.target/self.page

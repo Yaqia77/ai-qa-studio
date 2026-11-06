@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""UI 自动化三期端到端冒烟：浏览器复用（执行提速）+ 用例级失败重试（稳定性）。
+"""UI 自动化端到端冒烟：浏览器复用（执行提速）+ 用例级失败重试（稳定性）。
 
 用法（须用装了 playwright 的 venv 解释器启动后端，再执行本脚本）：
     .venv\Scripts\python.exe -m uvicorn backend.main:app --port 8000
     .venv\Scripts\python.exe tools\smoke_ui_phase3.py
 
-覆盖设计文档「验证门禁」第 6 条的两项新证据（二期/一期冒烟只守存量，不含这两条）：
+覆盖验证门禁的两项新证据（既有冒烟只守存量，不含这两条）：
 1. 复用：一个 3 条用例的批次（同 chromium/headless 分组），执行日志里「新启浏览器束」应恰为 1 次
    （分组数），而非 3 次（用例数）；批次结束统一回收 1 束。
 2. 重试：一条 flaky 用例（本地站点首次访问给 loading、第二次才给 ready）配 retry=1 应转绿，
@@ -30,7 +30,7 @@ from pathlib import Path
 
 BASE = os.environ.get("IA_BASE", "http://127.0.0.1:8000").rstrip("/")
 ROOT = Path(__file__).resolve().parents[1]
-# 执行日志共享文件（与 core/log_setup 同源）：四期后全进程 append 同一文件，
+# 执行日志共享文件（与 core/log_setup 同源）：全进程 append 同一文件，
 # 冒烟按发起前偏移量读增量窗口，跨批次不串计。
 LOG_FILE = ROOT / "logs" / "interface-auto_runtime.log"
 FIXTURE_URI = (ROOT / "tests" / "fixtures" / "ui_demo.html").as_uri()

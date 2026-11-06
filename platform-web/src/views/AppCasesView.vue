@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * App 用例管理（项目 kind=app，阶段 3 预留位/脚手架）：可视化步骤用例的列表 / 筛选 / 增删改 / 跨项目迁移。
+ * App 用例管理（项目 kind=app，预留位/脚手架）：可视化步骤用例的列表 / 筛选 / 增删改 / 跨项目迁移。
  *
  * 与 UI 用例（UiCasesView）同构，只是把"浏览器/无头"换成"平台(android/ios)+被测应用包名"，
  * 数据全部走 /api/app-cases，载体是 .apjson。本页自包含拉取逻辑，CasesView 在选中 App 项目时整体委托给它。
@@ -277,7 +277,7 @@ watch(
       :closable="false"
       show-icon
       style="margin-bottom: 12px"
-      title="App 自动化为阶段 3 预留位：用例可编辑维护、可被执行链路收集，实际驱动（Appium）接入后即可运行"
+      title="App 自动化为预留脚手架：用例可编辑维护、可被执行链路收集，实际驱动（Appium）接入后即可运行"
     />
     <el-card shadow="never" style="margin-bottom: 12px">
       <el-form inline @submit.prevent>

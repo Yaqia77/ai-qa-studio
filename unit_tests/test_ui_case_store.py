@@ -104,10 +104,10 @@ def test_validate_bad_extract():
     assert e.value.kind == "invalid"
 
 
-# ==================== 失败重试字段（三期-B） ====================
+# ==================== 失败重试字段 ====================
 
 def test_validate_retry_absent_defaults_zero():
-    # 存量用例无 retry 键 → 规范化为 0（不重试，行为与二期一致）
+    # 存量用例无 retry 键 → 规范化为 0（不重试，行为不变）
     assert store.validate_case(_case())["retry"] == 0
 
 
@@ -318,7 +318,7 @@ def test_normalize_bool_default():
     assert store.normalize_bool("乱填", default=False) is False
 
 
-# ==================== 五期：动作扩展校验 / meta hint / 新定位前缀 ====================
+# ==================== 动作扩展校验 / meta hint / 新定位前缀 ====================
 
 P5_NEW_ACTIONS = {
     "uncheck", "dblclick", "upload", "right_click", "scroll_to", "drag_to", "navigate",
@@ -329,7 +329,7 @@ P5_NEW_ACTIONS = {
 
 def test_p5_actions_registered_baseline():
     assert P5_NEW_ACTIONS <= set(store.VALID_ACTIONS)
-    assert len(store.ACTIONS) == 31          # 五期基线：12 → 31，新动作只增不减
+    assert len(store.ACTIONS) == 31          # 动作基线：12 → 31，新动作只增不减
     assert len(store.VALID_ACTIONS) == len(store.ACTIONS)
 
 

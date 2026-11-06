@@ -56,7 +56,7 @@ export interface UiCaseItem {
   post_scripts: string[];
   /** 引用的登录态会话 id（开机加载其 storage_state）；null/缺省=不引用 */
   session?: string | null;
-  /** 失败重试次数 0–3（三期-B；任一次通过即判通过，缺省=0 不重试） */
+  /** 失败重试次数 0–3（任一次通过即判通过，缺省=0 不重试） */
   retry?: number;
 }
 
@@ -103,7 +103,7 @@ export interface UiImportPreviewResp {
   error?: string;
 }
 
-/** UI 登录态会话派生状态（二期 storage_state 复用） */
+/** UI 登录态会话派生状态（storage_state 复用） */
 export type UiSessionStatusKind = "not_collected" | "valid" | "expired" | "failed";
 
 /** 一条登录态会话（/api/ui-sessions，注册表元数据 + 派生状态；不含 storage_state 实体） */
@@ -314,7 +314,7 @@ export interface RunCaseSummary {
   summary: string;
   assert_total: number | null;
   assert_failed: number | null;
-  /** 六期 flaky 观测：实际尝试次数（缺省 1=未重试）；retried=发生过重试；flaky=重试后通过（不稳定） */
+  /** flaky 观测：实际尝试次数（缺省 1=未重试）；retried=发生过重试；flaky=重试后通过（不稳定） */
   attempts?: number;
   retried?: boolean;
   flaky?: boolean;
@@ -351,9 +351,9 @@ export interface RunCaseDetail {
   scripts: ScriptTraceItem[];
   /** UI 用例步骤轨迹（接口用例为 null）；截图经 /api/runs/{id}/attachment/{screenshot_source} 取图 */
   ui_steps: UiStepTrace[] | null;
-  /** UI 重试轨迹（三期-B）；未发生重试/非 UI 用例为 null */
+  /** UI 重试轨迹；未发生重试/非 UI 用例为 null */
   ui_retry?: UiRetryTrace | null;
-  /** 六期失败 trace zip 在批次 allure-results 中的源文件名（报告页下载 show-trace 用）；非 UI/无 trace 为 null */
+  /** 失败 trace zip 在批次 allure-results 中的源文件名（报告页下载 show-trace 用）；非 UI/无 trace 为 null */
   trace_file?: string | null;
 }
 
@@ -772,7 +772,7 @@ export interface SkeletonResult {
   errors: string[];
 }
 
-/* ================= AI 生成（qa-agent 直连 + 平台落库闸门，Agent 接入一期 M4） ================= */
+/* ================= AI 助手（qa-agent 直连 + 平台落库闸门） ================= */
 
 /** POST /v1/generations 请求（对齐 qa-agent GenerationIn；dry_run 缺省 true 恒不落库） */
 export interface GenerationReq {
@@ -867,7 +867,7 @@ export interface AgentCasesBody {
   file?: string;
 }
 
-/* ---------------- 对话式 AI 生成（二期 P1/P2） ----------------
+/* ---------------- 对话式 AI 生成 ----------------
  * 协议真源在 qa-agent docs/protocol.md 第 7 节：事件类型闭集十个，改一边必须同步另一边。
  */
 
@@ -876,7 +876,7 @@ export interface ChatPlanStep {
   seq: number;
   case_id: string;
   name: string;
-  kind: string;                     // api_case（一期只有用例节点）
+  kind: string;                     // api_case（当前只有用例节点）
   method: string;
   url: string;
   inputs: string[];
@@ -902,6 +902,10 @@ export interface ChatReq {
   mode?: "auto" | "generate" | "complete" | "expand";
   count?: number;
   auto_register?: "auto" | "ask" | "off";
+  /** 本轮开启联网搜索（服务端 llm.web_search_enabled 总闸放开且网关支持时才生效） */
+  web_search?: boolean;
+  /** 本轮使用的模型（留空用服务端缺省 chat_model；应在 /health 回带的 models 内） */
+  model?: string;
   patch?: { case_id: string; body: Record<string, unknown> } | null;
   attachments?: { name: string; content: string }[];
 }
@@ -909,12 +913,13 @@ export interface ChatReq {
 /** SSE 事件判别联合：type 到 payload 的映射与后端 EVENT_TYPES 一一对应 */
 export type ChatEvent =
   | { type: "token"; payload: { text: string } }
+  | { type: "trace"; payload: { phase: string; detail: string } }
   | { type: "plan"; payload: { steps: ChatPlanStep[] } }
   | { type: "step_start"; payload: { seq: number; summary: string } }
   | { type: "step_finish"; payload: { seq: number; ok: boolean; summary: string } }
   | { type: "case_ready"; payload: ChatCaseReady }
   | { type: "registered"; payload: { case_ids: string[]; file: string; count: number;
-                                     /** P5：平台编号冲突自动让号（from=草稿旧号，to=落库新号） */
+                                     /** 平台编号冲突自动让号（from=草稿旧号，to=落库新号） */
                                      renamed?: { from: string; to: string }[] } }
   | { type: "ask"; payload: { question: string; options?: string[] } }
   | { type: "citation"; payload: { kb_id: string; title: string; source_uri: string } }

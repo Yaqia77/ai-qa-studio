@@ -38,7 +38,7 @@ def _attach_png(name, data):
 
 
 def _attach_trace(name, data):
-    """六期：失败 trace zip 落 allure-results（extension=zip），供报告页下载 show-trace 回放。"""
+    """失败 trace zip 落 allure-results（extension=zip），供报告页下载 show-trace 回放。"""
     if HAS_ALLURE:
         allure.attach(body=data, name=name, extension="zip")
 
@@ -63,17 +63,17 @@ def test_ui(ui_case, app_config, context, dep_map, case_results, ui_session_regi
 
     base_url = (app_config["env"] or {}).get("base_url", "")
     # 统一执行入口：按 key 取引擎多态执行（内部委托 UiRunner，与旧直调完全一致）。
-    # 二期登录态复用：注入 session_provider 把 case.session 解析成可加载的 storage_state；
-    # 未引用会话的存量用例 provider 返回 (None, None)，行为与 v1 完全一致。
-    # 三期执行提速：注入进程级 ui_browser_pool，浏览器跨用例复用（context 级隔离不变）。
-    # 三期重试（B1）：优先级 用例 retry(>0) > 批次默认 ui.retry_default > 0；
-    # 存量 JSON 无 retry 键时取 0，行为与二期逐条一致（不重试）。
+    # 登录态复用：注入 session_provider 把 case.session 解析成可加载的 storage_state；
+    # 未引用会话的存量用例 provider 返回 (None, None)，行为保持不变。
+    # 执行提速：注入进程级 ui_browser_pool，浏览器跨用例复用（context 级隔离不变）。
+    # 重试：优先级 用例 retry(>0) > 批次默认 ui.retry_default > 0；
+    # 存量 JSON 无 retry 键时取 0（不重试）。
     from backend.ui import session_collect
 
     case_retry = int(ui_case.get("retry") or 0)
     batch_default = int(((app_config.get("config") or {}).get("ui") or {}).get("retry_default") or 0)
     retry = case_retry if case_retry > 0 else batch_default
-    # 六期观测与诊断：trace 留存开关取 config.ui.trace（缺省 on_failure：仅失败时导出）；
+    # 观测与诊断：trace 留存开关取 config.ui.trace（缺省 on_failure：仅失败时导出）；
     # 无 allure 环境不注入回调（attach_trace=None），引擎端 trace_blob 自然落空，零回归。
     trace_mode = ((app_config.get("config") or {}).get("ui") or {}).get("trace") or "on_failure"
 

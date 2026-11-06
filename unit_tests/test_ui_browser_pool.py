@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""BrowserPool / BrowserBundle 纯逻辑单测（三期-阶段 2：安全阀与复用语义）。
+"""BrowserPool / BrowserBundle 纯逻辑单测（安全阀与复用语义）。
 
 全程喂假 driver（launch_fn 注入），不真起浏览器：验证「复用只折叠浏览器进程、
 绝不折叠 context 隔离」的核心不变式 + reap 安全阀 + dead 重启 + close_all 回收。
@@ -52,7 +52,7 @@ class FakePage:
         self.default_timeout = ms
 
     def on(self, event, handler):
-        pass  # 五期：run() 会注册 page.on("dialog", ...)，假对象需匹配真实 Page 契约
+        pass  # run() 会注册 page.on("dialog", ...)，假对象需匹配真实 Page 契约
 
     def close(self):
         self.closed = True
@@ -199,7 +199,7 @@ def test_bundle_new_context_passes_storage_state():
     ctx = bundle.new_context("/tmp/ss.json")
     assert ctx.kwargs == {"storage_state": "/tmp/ss.json"}
     ctx2 = bundle.new_context(None)
-    assert ctx2.kwargs == {}  # 裸上下文不带任何 kw —— 与二期 _new_context 口径一致
+    assert ctx2.kwargs == {}  # 裸上下文不带任何 kw —— 与 _new_context 口径一致
     pool.close_all()
 
 
@@ -360,7 +360,7 @@ def test_collect_mode_never_uses_pool(monkeypatch, tmp_path):
 
 
 def test_runner_without_pool_keeps_legacy_lifecycle(monkeypatch):
-    """无池回退：逐条 start→launch→...→browser.close + pw.stop，与二期逐字节一致。"""
+    """无池回退：逐条 start→launch→...→browser.close + pw.stop，与逐条独立启停一致。"""
     fake_pw = FakePW(FakeBrowser())
 
     def fake_sync_playwright():

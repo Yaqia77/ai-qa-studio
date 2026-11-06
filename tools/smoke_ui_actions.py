@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""UI 自动化五期能力扩展端到端冒烟（iframe / 多窗口 / 上传 / 等待 / 富断言 / 定位方言 / dialog）。
+"""UI 自动化能力扩展端到端冒烟（iframe / 多窗口 / 上传 / 等待 / 富断言 / 定位方言 / dialog）。
 
 用法：先启动后端（须用装了 playwright 的 venv 解释器），再执行本脚本
     .venv\Scripts\python.exe -m uvicorn backend.main:app --port 8000
@@ -103,7 +103,7 @@ def main():
     check("建临时 UI 项目", code == 201 and pfile, f"{code} {proj}")
     code, meta = req("GET", "/api/ui-cases/meta" + _smoke.qf(pfile), token=tok)
     by = {a["action"]: a for a in meta.get("actions", [])}
-    check("meta 含全部五期新动作", all(a in by for a in
+    check("meta 含全部新增动作", all(a in by for a in
           ("upload", "drag_to", "switch_frame", "switch_window", "expect_attr", "expect_count")), f"{code}")
     check("meta 动作带 hint 字段（upload/switch_frame 非空）",
           "hint" in by.get("upload", {}) and by["upload"].get("hint") and by["switch_frame"].get("hint"))

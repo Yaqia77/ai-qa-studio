@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""App 自动化请求/响应模型（自动生成 OpenAPI 文档的类型契约）。阶段 3 预留位（脚手架）。"""
+"""App 自动化请求/响应模型（自动生成 OpenAPI 文档的类型契约），当前为预留位（脚手架）。"""
 from typing import Any
 
 from pydantic import BaseModel, Field

@@ -7,14 +7,14 @@ attach=(name, png_bytes) 落图），由 tests/test_ui.py 负责胶水，保持 
 
 动作集与定位器前缀口径与 backend.ui_case_store.ACTIONS / _LOCATOR_PREFIXES 一致（二者是唯二消费方）。
 
-二期（登录态复用）：引用了 case.session 的用例，通过注入的 session_provider 解析出 Playwright
+登录态复用：引用了 case.session 的用例，通过注入的 session_provider 解析出 Playwright
 storage_state 实体路径并在 new_context 时加载（开机即已登录）；mode="collect" 则在步骤全部成功后
 用 context.storage_state(path=..) 导出登录态，交 session_committer 原子落盘。provider/committer
-均由上层注入，core 不依赖 backend；不引用会话的存量用例行为与 v1 完全一致。
+均由上层注入，core 不依赖 backend；不引用会话的存量用例行为保持不变。
 
-三期（执行提速）：可注入 browser_pool（BrowserPool）。有池时浏览器跨用例复用——每条用例只
+执行提速：可注入 browser_pool（BrowserPool）。有池时浏览器跨用例复用——每条用例只
 new_context（context 级隔离原样保留）并在收尾**只关 context 不关 browser**；无池时保持逐条
-独立启停的二期行为（向后兼容底线）。采集模式(mode="collect")永不进池：同步短任务独立启停，
+独立启停（向后兼容底线）。采集模式(mode="collect")永不进池：同步短任务独立启停，
 崩溃不牵连批次。
 """
 from __future__ import annotations
@@ -33,7 +33,7 @@ from core.variable import render
 if TYPE_CHECKING:  # 仅类型标注：core 不强依赖池实现，运行期按鸭子类型消费
     from core.engines.web.browser_pool import BrowserPool
 
-# 步骤默认操作超时（毫秒）：定位/断言等待上限，环境慢时可在用例层调整（v1 固定）
+# 步骤默认操作超时（毫秒）：定位/断言等待上限，环境慢时可在用例层调整
 _DEFAULT_TIMEOUT_MS = 8000
 
 # 截图默认落盘目录（无 allure 钩子的独立/CLI 运行也会写图到此；reports 已 gitignore）
@@ -50,11 +50,11 @@ class UiRunResult:
     extracted: dict = field(default_factory=dict)      # 本条用例提取到的变量（已写入 ctx）
     storage_state: Optional[str] = None                # 复用时加载的登录态实体路径（None=裸上下文）
     collected: Optional[str] = None                    # 采集模式导出的临时 storage_state 路径（供回写器落盘）
-    # 三期-B 重试：attempts=实际尝试次数（1=未重试，与存量语义一致）；
+    # 重试：attempts=实际尝试次数（1=未重试，与存量语义一致）；
     # attempt_history=此前各次失败摘要（末次结果不重复入列），供报告展示「重试 k 次后通过」。
     attempts: int = 1
     attempt_history: list[dict] = field(default_factory=list)
-    # 六期观测与诊断：失败时导出的 Playwright trace zip 字节（仅末次失败留存，交上层回调落 allure）
+    # 观测与诊断：失败时导出的 Playwright trace zip 字节（仅末次失败留存，交上层回调落 allure）
     trace_blob: Optional[bytes] = None
 
 
@@ -62,7 +62,7 @@ class UiRunnerError(Exception):
     """浏览器/动作层的可恢复错误，统一转成用例失败而非崩溃。"""
 
 
-# 浏览器「中途崩溃/断连」类报错特征：命中即标 bundle dead，下次 acquire 触发重启（三期-安全阀）
+# 浏览器「中途崩溃/断连」类报错特征：命中即标 bundle dead，下次 acquire 触发重启（安全阀）
 _BROWSER_DEAD_HINTS = (
     "target closed", "browser has been closed", "browser closed",
     "connection closed", "has been closed", "browsercontext has been closed",
@@ -97,7 +97,7 @@ def _resolve_locator(page, locator: str):
                 elif k in ("exact",):
                     kwargs["exact"] = v.lower() == "true"
         return page.get_by_role(role, **kwargs)
-    # 五期 P3 稳定标识方言：testid/placeholder/alt 走 Playwright 语义化 getter（Page 与 Frame 均支持）
+    # 稳定标识方言：testid/placeholder/alt 走 Playwright 语义化 getter（Page 与 Frame 均支持）
     if locator.startswith("testid="):
         return page.get_by_test_id(locator[len("testid="):].strip())
     if locator.startswith("placeholder="):
@@ -142,7 +142,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _accept_dialog(dialog) -> None:
-    """五期 P4：默认放行原生 dialog（alert/confirm/beforeunload）；无法 accept 时静默。"""
+    """默认放行原生 dialog（alert/confirm/beforeunload）；无法 accept 时静默。"""
     try:
         dialog.accept()
     except Exception:  # noqa: BLE001 dialog 已被处理/页面关闭均忽略
@@ -182,18 +182,18 @@ class UiRunner:
         self.mode = mode
         self._session_provider = session_provider
         self._session_committer = session_committer
-        # browser_pool（三期）：注入即跨用例复用浏览器进程；采集模式强制不进池（独立启停隔离风险）。
+        # browser_pool：注入即跨用例复用浏览器进程；采集模式强制不进池（独立启停隔离风险）。
         self._browser_pool = browser_pool
-        # attempt（三期-B）：第几次尝试（1 起）。仅影响截图命名（>1 时加「第N试」前缀），
-        # 保证 retry=0 的存量用例截图名与二期逐字节一致。
+        # attempt：第几次尝试（1 起）。仅影响截图命名（>1 时加「第N试」前缀），
+        # 保证 retry=0 的存量用例截图命名保持一致。
         self.attempt = max(1, int(attempt))
-        # 六期：trace 留存模式（"off" / "on_failure"）；采集模式恒不启用
+        # trace 留存模式（"off" / "on_failure"）；采集模式恒不启用
         self._trace = (trace or "off").lower()
         # 截图名中的用例标识（run() 开头从 case 回填）：不同用例同名步骤截图不再互相覆盖
         self._case_tag = ""
-        # 五期 P4「活动 target」模型：self.page=当前根标签页（页面级动作作用域），
+        # 「活动 target」模型：self.page=当前根标签页（页面级动作作用域），
         # self.target=当前定位作用对象（Page 或 Frame），定位/断言/提取都在其上解析。
-        # 初始 target is page；未用 switch_frame/switch_window 时与四期行为逐条等价（向后兼容底线）。
+        # 初始 target is page；未用 switch_frame/switch_window 时行为逐条等价（向后兼容底线）。
         self.page = None
         self.target = None
         self._context = None
@@ -213,12 +213,12 @@ class UiRunner:
         context = None
         bundle = None
         tracing_on = False
-        # 采集模式永不进池（设计护栏：采集是同步短任务，崩溃不牵连批次）；无池 = 二期逐条独立启停现状。
+        # 采集模式永不进池（设计护栏：采集是同步短任务，崩溃不牵连批次）；无池 = 逐条独立启停现状。
         use_pool = self._browser_pool is not None and self.mode != "collect"
         try:
             # 登录态解析前置到启动浏览器之前：引用会话且解析失败即中断，既不浪费一次浏览器启动，
             # 也不会把「未登录」当「已登录」继续跑。采集模式从裸浏览器起步（要从不登录走到登录再导出），
-            # 故忽略 case.session。未引用会话的用例走 (None, None)，行为与 v1 完全一致。
+            # 故忽略 case.session。未引用会话的用例走 (None, None)，行为保持不变。
             if self.mode != "collect":
                 storage_state, ss_err = self._resolve_storage_state(case)
                 if ss_err:
@@ -226,7 +226,7 @@ class UiRunner:
                 result.storage_state = storage_state
 
             if use_pool:
-                # 复用链路：browser 跨用例常驻，本条用例只领一个新 context —— 隔离语义与二期逐字一致
+                # 复用链路：browser 跨用例常驻，本条用例只领一个新 context —— 隔离语义与逐条启动一致
                 bundle = self._browser_pool.acquire(browser=browser_name, headless=headless)
                 context = bundle.new_context(result.storage_state)
             else:
@@ -239,10 +239,10 @@ class UiRunner:
             self.page = page
             self.target = page
             self._context = context
-            # 五期 P4：默认放行原生 dialog（alert/confirm/beforeunload），多数流程需点“确定”；
+            # 默认放行原生 dialog（alert/confirm/beforeunload），多数流程需点“确定”；
             # 此前 Playwright 默认 dismiss 会静默取消。需 dismiss 的场景留后续显式动作。
             page.on("dialog", _accept_dialog)
-            # 六期：context 建立后按需启用 trace（假对象/旧内核失败自动降级为不录制）
+            # context 建立后按需启用 trace（假对象/旧内核失败自动降级为不录制）
             tracing_on = self._maybe_start_tracing(context)
 
             steps = case.get("steps") or []
@@ -288,7 +288,7 @@ class UiRunner:
             if use_pool and bundle is not None and _looks_browser_dead(result.error):
                 self._browser_pool.invalidate(bundle)
         finally:
-            # 六期：本次失败且已录 trace，在关闭 context 前导出 zip 字节（末次失败留存交上层）；
+            # 本次失败且已录 trace，在关闭 context 前导出 zip 字节（末次失败留存交上层）；
             # 通过则显式 stop 丢弃（避免真实浏览器「tracing 未关闭」告警，不留文件）。
             if tracing_on and context is not None:
                 if not result.ok:
@@ -298,7 +298,7 @@ class UiRunner:
                 else:
                     self._stop_tracing_discard(context)
             if use_pool:
-                # 只关 page/context，绝不关 browser/playwright —— 这正是本期折叠掉的固定开销所在。
+                # 只关 page/context，绝不关 browser/playwright —— 这正是池折叠掉的固定开销所在。
                 # context 关闭失败也不放过 page 的回收尝试；bundle 是否报废由下次 acquire 探活决定。
                 for closer in (lambda: page and page.close(),
                                lambda: context and context.close()):
@@ -317,10 +317,10 @@ class UiRunner:
             result.duration = time.perf_counter() - start
         return result
 
-    # ---------- Trace（六期观测与诊断） ----------
+    # ---------- Trace（观测与诊断） ----------
 
     def _maybe_start_tracing(self, context) -> bool:
-        """六期：trace 开启且 context 支持时启动 tracing；假对象/旧内核异常一律视作未启动（降级不影响用例）。"""
+        """trace 开启且 context 支持时启动 tracing；假对象/旧内核异常一律视作未启动（降级不影响用例）。"""
         if self._trace != "on_failure" or self.mode == "collect" or context is None:
             return False
         try:
@@ -331,7 +331,7 @@ class UiRunner:
             return False
 
     def _export_trace(self, context) -> Optional[bytes]:
-        """六期：停止 tracing 并读回 trace zip；任何异常返回 None（trace 是锦上添花，绝不左右判定）。"""
+        """停止 tracing 并读回 trace zip；任何异常返回 None（trace 是锦上添花，绝不左右判定）。"""
         tmp = None
         try:
             base = self.output_dir if self.output_dir is not None else Path(tempfile.gettempdir())
@@ -350,7 +350,7 @@ class UiRunner:
                     pass
 
     def _stop_tracing_discard(self, context) -> None:
-        """六期：用例通过时显式停止 tracing 但不导出文件（不留垃圾，不触发未关闭告警）。"""
+        """用例通过时显式停止 tracing 但不导出文件（不留垃圾，不触发未关闭告警）。"""
         try:
             context.tracing.stop()
         except Exception as e:  # noqa: BLE001 丢弃失败无关紧要
@@ -731,8 +731,8 @@ class WebEngine(Engine):
                 output_dir: Optional[Path] = DEFAULT_OUTPUT_DIR, **deps) -> UiRunResult:
         """执行一条 UI 用例 → UiRunResult。
 
-        browser_pool（三期）：注入即启用浏览器跨用例复用；未注入的存量调用点行为不变。
-        retry（三期-B）：失败重试次数。生效优先级 显式 retry 入参 > 用例 retry > 0；
+        browser_pool：注入即启用浏览器跨用例复用；未注入的存量调用点行为不变。
+        retry：失败重试次数。生效优先级 显式 retry 入参 > 用例 retry > 0；
         采集模式（mode="collect"）永不重试（设计护栏：采集失败直接反馈，交由重采/手动）。
         重试语义：任一次通过即最终通过；全失败保留末次错误与轨迹，各次失败摘要入
         attempt_history（报告页展示「重试 k 次后通过」，让 flaky 可见而非被吞）。
@@ -756,7 +756,7 @@ class WebEngine(Engine):
         result.attempt_history = history
         if result.attempts > 1 and not result.ok:
             result.error = f"重试 {result.attempts - 1} 次后仍失败：{result.error}"
-        # 六期：用例最终失败才落 trace 附件（trace_blob 仅在该次 run 失败时留），中间失败末次通过不留
+        # 用例最终失败才落 trace 附件（trace_blob 仅在该次 run 失败时留），中间失败末次通过不留
         if not result.ok and result.trace_blob and attach_trace is not None:
             try:
                 attach_trace("UI失败trace", result.trace_blob)

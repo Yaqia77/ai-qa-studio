@@ -104,7 +104,7 @@ def test_full_flow_all_actions(base_url):
     assert "?logged_in=1" in ctx.get("page_url")
     # screenshot 步骤留了截图名
     assert result.steps[13]["screenshot"]
-    # 终态截图（五期新增）：最后一步为自动补的 final_shot，携带自己的截图证据
+    # 终态截图：最后一步为自动补的 final_shot，携带自己的截图证据
     assert result.steps[-1]["action"] == "final_shot"
     assert result.steps[-1]["screenshot"]
 
@@ -150,7 +150,7 @@ class _FakeContext:
 
 
 def test_no_session_is_backward_compatible():
-    # 与 v1 同调用方式（不传 provider），未引用会话 → (None, None)，后续走裸上下文
+    # 与旧调用方式一致（不传 provider），未引用会话 → (None, None)，后续走裸上下文
     r = UiRunner(Context({}, {}), "http://x")
     path, err = r._resolve_storage_state({"case_id": "t", "steps": []})
     assert path is None and err is None

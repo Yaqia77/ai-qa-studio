@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""三期-B 用例级失败重试：WebEngine.execute 的重试外层语义（纯逻辑 + 假 driver，不真起浏览器）。
+"""用例级失败重试：WebEngine.execute 的重试外层语义（纯逻辑 + 假 driver，不真起浏览器）。
 
-验收口径（设计文档阶段 3）：
+验收口径：
 - flaky 用例 retry=1：第 1 次失败、第 2 次通过 → 最终判通过，attempts=2，历史留首次失败摘要；
 - 稳定失败：全次失败才判 fail，错误带「重试 k 次后仍失败」，保留末次轨迹；
-- retry=0 / 存量用例：只跑一次，attempts=1，无历史（与二期逐条行为一致）；
+- retry=0 / 存量用例：只跑一次，attempts=1，无历史（与逐条串行行为一致）；
 - 采集模式永不重试；上限截断 0..3。
 
     .venv/Scripts/python.exe -m pytest unit_tests/test_ui_retry.py -v
@@ -29,7 +29,7 @@ class FakePage:
         pass
 
     def on(self, event, handler):
-        pass  # 五期：run() 会注册 page.on("dialog", ...)，假对象需匹配真实 Page 契约
+        pass  # run() 会注册 page.on("dialog", ...)，假对象需匹配真实 Page 契约
 
     def close(self):
         pass
@@ -130,7 +130,7 @@ def test_stable_failure_keeps_last_trace(monkeypatch):
 
 
 def test_retry_zero_single_attempt_unchanged(monkeypatch):
-    """retry=0（含存量用例无 retry 键）：只跑一次，attempts=1，无历史——与二期行为逐条一致。"""
+    """retry=0（含存量用例无 retry 键）：只跑一次，attempts=1，无历史——与逐条串行行为一致。"""
     _patch_playwright(monkeypatch)
     res = WebEngine().execute(_case(), Context({}, {}), base_url="http://x")
     assert res.ok is True and res.attempts == 1 and res.attempt_history == []

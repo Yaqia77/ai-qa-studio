@@ -39,7 +39,7 @@ class UiCaseOut(BaseModel):
     pre_scripts: list[str] = Field(default_factory=list)
     post_scripts: list[str] = Field(default_factory=list)
     session: str | None = Field(default=None, description="引用的登录态会话 id（开机加载其 storage_state）")
-    retry: int = Field(default=0, description="失败重试次数 0–3（三期-B；任一次通过即判通过，采集模式不重试）")
+    retry: int = Field(default=0, description="失败重试次数 0–3（任一次通过即判通过，采集模式不重试）")
 
 
 class UiCasePage(BaseModel):
@@ -97,7 +97,7 @@ class UiImportReq(BaseModel):
     cases: list[dict] = Field(default_factory=list, description="用例 JSON 数组，字段与单条创建接口同构")
 
 
-# ==================== UI 登录态会话（二期 storage_state 复用，全局注册表） ====================
+# ==================== UI 登录态会话（storage_state 复用，全局注册表） ====================
 
 
 class UiSessionOut(BaseModel):

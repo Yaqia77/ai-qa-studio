@@ -6,7 +6,7 @@
     python main.py --module 演示-文章CRUD              # 只跑指定模块
     python main.py --priority P0,P1                   # 只跑指定优先级
     python main.py --keyword 登录                      # 按关键字筛选
-    python main.py --file proj_x.json --workers 2     # UI 批次并行（四期，仅 web 引擎生效）
+    python main.py --file proj_x.json --workers 2     # UI 批次并行（仅 web 引擎生效）
 """
 import argparse
 import os
@@ -77,7 +77,7 @@ def main() -> None:
     print(f"[interface-auto] 引擎: {engine.key}（{engine.label}）→ {engine.test_module}")
     pytest_args = [test_target, "-v", "--tb=short"]
 
-    # 四期并行：仅 web（UI）引擎拼 xdist 参数；依赖护栏与分组分片在 conftest 收集期决策。
+    # 并行：仅 web（UI）引擎拼 xdist 参数；依赖护栏与分组分片在 conftest 收集期决策。
     # loadgroup 下每个 xdist_group 钉在同一 worker 串行 → 束复用与依赖顺序都锁在片内。
     workers = _effective_workers(args.workers, config.get("ui") or {})
     if workers > 1 and engine.key == "web":

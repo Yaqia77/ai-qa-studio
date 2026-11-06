@@ -5,7 +5,7 @@ default_env: test
 # 从 data/secret_vars_template.xlsx 复制为该文件名并填入真实值，程序运行时自动加载
 secret_vars_file: data/secret_vars.xlsx
 
-# 公共脚本库（前后置处理器，设计文档 2.4）：用例 Excel 的「前置脚本 / 后置脚本」列按名引用这里的脚本
+# 公共脚本库（前后置处理器）：用例 Excel 的「前置脚本 / 后置脚本」列按名引用这里的脚本
 scripts_file: data/scripts.json
 
 # 环境配置：base_url 用于拼接用例中的相对路径；default_headers 与用例请求头合并（用例优先）
@@ -33,24 +33,24 @@ report:
   html: true        # 每次运行生成 reports/<时间戳>/report.html（单文件，双击可看）
   allure: true      # 每次运行生成 reports/<时间戳>/allure-results/
 
-# UI 自动化执行参数（三期-B）：批次级默认值，用例显式设了 retry(>0) 时以用例为准
+# UI 自动化执行参数：批次级默认值，用例显式设了 retry(>0) 时以用例为准
 ui:
   retry_default: 0  # 失败重试次数默认值（0–3，0=不重试；采集模式永不重试）
-  workers_default: 1  # 并行 worker 数默认值（四期：1=串行；>1 走 xdist loadgroup 按浏览器分组×分片并行）
+  workers_default: 1  # 并行 worker 数默认值（1=串行；>1 走 xdist loadgroup 按浏览器分组×分片并行）
   workers_max: 4      # 并行 worker 数硬上限（再受本机 CPU 核数截断）
-  trace: on_failure   # 六期观测与诊断：失败 trace 留存（off=关闭 / on_failure=用例最终失败时导出 Playwright trace.zip 落报告）
+  trace: on_failure   # 失败 trace 留存（off=关闭 / on_failure=用例最终失败时导出 Playwright trace.zip 落报告）
 
 # 日志
 log:
   level: INFO       # DEBUG / INFO / WARNING / ERROR
 
-# Agent 桥接（M2：知识库语料只读导出）。缺省 enabled=false，
+# Agent 桥接（知识库语料只读导出）。缺省 enabled=false，
 # 关闭时 /api/agent/* 端点不注册，存量接口与页面行为零回归；
 # 打开后暴露 /api/agent/*：只读语料导出 + 草稿校验预览（preview）+ 确认后落库（commit）。
 # 服务账号 agent_svc 用 tools/init_agent_svc.py 创建（只读 + case:write）。
 agent:
-  enabled: false
+  enabled: true
   base_url: http://127.0.0.1:8000   # 平台自身地址，供语料 source_uri 回跳原文
-  timeout: 15                        # Agent 回调平台的超时（M3 preview/commit 使用）
+  timeout: 15                        # Agent 回调平台的超时（preview/commit 使用）
   account:
     username: agent_svc             # 服务账号（建议只读 + case:write）；密码走 secret_vars，不入库

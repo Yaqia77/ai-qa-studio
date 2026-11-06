@@ -30,7 +30,7 @@ const cases = ref<UiCaseItem[]>([]);
 const total = ref(0);
 const meta = ref<UiCaseMeta | null>(null);
 const variables = ref<string[]>([]);
-const sessions = ref<UiSession[]>([]);   // 可引用的登录态会话（二期复用）
+const sessions = ref<UiSession[]>([]);   // 可引用的登录态会话
 const filters = reactive({ priority: [] as string[], keyword: "", onlyEnabled: false });
 const activeModule = ref("");   // "" = 全部
 const pageSize = ref(10);

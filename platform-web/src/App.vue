@@ -2,6 +2,10 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
+import {
+  Odometer, TrendCharts, Tickets, MagicStick, Avatar, Connection, Collection,
+  SetUp, VideoPlay, DataAnalysis, Timer, Setting, Key, Lock, Bell, User, UserFilled,
+} from "@element-plus/icons-vue";
 import { api } from "./api";
 import { currentUser, logout } from "./stores/auth";
 import type { EnvInfo } from "./types";
@@ -49,35 +53,38 @@ function onUserCommand(cmd: string) {
   <router-view v-if="barePage" />
 
   <el-container v-else style="height: 100vh">
-    <el-aside width="220px" class="side">
-      <div class="logo">● Interface Auto 平台</div>
+    <el-aside width="232px" class="side">
+      <div class="logo">
+        <el-icon class="logo-mark"><MagicStick /></el-icon>
+        <span class="logo-text">Interface Auto</span>
+      </div>
       <el-menu router :default-active="activeMenu" class="side-menu">
         <el-menu-item-group title="概览">
-          <el-menu-item index="/dashboard">📊 工作台</el-menu-item>
-          <el-menu-item index="/stats">📉 统计报表</el-menu-item>
+          <el-menu-item index="/dashboard"><el-icon><Odometer /></el-icon><span>工作台</span></el-menu-item>
+          <el-menu-item index="/stats"><el-icon><TrendCharts /></el-icon><span>统计报表</span></el-menu-item>
         </el-menu-item-group>
         <el-menu-item-group title="测试管理">
-          <el-menu-item index="/cases">📋 用例管理</el-menu-item>
-          <el-menu-item v-perm="'case:write'" index="/agent-chat">🤖 AI 生成</el-menu-item>
-          <el-menu-item index="/ui-sessions">🔐 登录态</el-menu-item>
-          <el-menu-item v-perm="'api:manage'" index="/defs">📚 接口定义</el-menu-item>
-          <el-menu-item index="/plans">📁 测试场景</el-menu-item>
-          <el-menu-item v-perm="'script:manage'" index="/scripts">🧩 公共脚本</el-menu-item>
+          <el-menu-item index="/cases"><el-icon><Tickets /></el-icon><span>用例管理</span></el-menu-item>
+          <el-menu-item v-perm="'case:write'" index="/agent-chat"><el-icon><MagicStick /></el-icon><span>AI 助手</span></el-menu-item>
+          <el-menu-item index="/ui-sessions"><el-icon><Avatar /></el-icon><span>登录态</span></el-menu-item>
+          <el-menu-item v-perm="'api:manage'" index="/defs"><el-icon><Connection /></el-icon><span>接口定义</span></el-menu-item>
+          <el-menu-item index="/plans"><el-icon><Collection /></el-icon><span>测试场景</span></el-menu-item>
+          <el-menu-item v-perm="'script:manage'" index="/scripts"><el-icon><SetUp /></el-icon><span>公共脚本</span></el-menu-item>
         </el-menu-item-group>
         <el-menu-item-group title="执行与报告">
-          <el-menu-item index="/execution">🚀 执行中心</el-menu-item>
-          <el-menu-item index="/report">📈 报告详情</el-menu-item>
-          <el-menu-item v-perm="'schedule:manage'" index="/schedules">⏰ 定时任务</el-menu-item>
+          <el-menu-item index="/execution"><el-icon><VideoPlay /></el-icon><span>执行中心</span></el-menu-item>
+          <el-menu-item index="/report"><el-icon><DataAnalysis /></el-icon><span>报告详情</span></el-menu-item>
+          <el-menu-item v-perm="'schedule:manage'" index="/schedules"><el-icon><Timer /></el-icon><span>定时任务</span></el-menu-item>
         </el-menu-item-group>
         <el-menu-item-group title="配置中心">
-          <el-menu-item v-perm="'env:manage'" index="/envs">🌐 环境配置</el-menu-item>
-          <el-menu-item v-perm="'secret:manage'" index="/secrets">🔑 凭证管理</el-menu-item>
-          <el-menu-item v-perm="'webhook:manage'" index="/notifications">🔔 通知配置</el-menu-item>
+          <el-menu-item v-perm="'env:manage'" index="/envs"><el-icon><Setting /></el-icon><span>环境配置</span></el-menu-item>
+          <el-menu-item v-perm="'secret:manage'" index="/secrets"><el-icon><Key /></el-icon><span>凭证管理</span></el-menu-item>
+          <el-menu-item v-perm="'webhook:manage'" index="/notifications"><el-icon><Bell /></el-icon><span>通知配置</span></el-menu-item>
         </el-menu-item-group>
         <el-menu-item-group title="系统管理">
-          <el-menu-item v-perm="'user:manage'" index="/users">👥 用户管理</el-menu-item>
-          <el-menu-item v-perm="'user:manage'" index="/roles">🛡️ 角色权限</el-menu-item>
-          <el-menu-item v-perm="'audit:view'" index="/audit">📜 操作审计</el-menu-item>
+          <el-menu-item v-perm="'user:manage'" index="/users"><el-icon><User /></el-icon><span>用户管理</span></el-menu-item>
+          <el-menu-item v-perm="'user:manage'" index="/roles"><el-icon><UserFilled /></el-icon><span>角色权限</span></el-menu-item>
+          <el-menu-item v-perm="'audit:view'" index="/audit"><el-icon><Lock /></el-icon><span>操作审计</span></el-menu-item>
         </el-menu-item-group>
       </el-menu>
       <div class="side-foot">对接 FastAPI 后端 · Excel 为唯一用例载体</div>
@@ -113,29 +120,37 @@ function onUserCommand(cmd: string) {
 </template>
 
 <style>
-body { margin: 0; font-family: "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif; }
-.side { background: #1f2b3e; color: #bfcbd9; display: flex; flex-direction: column; }
-.logo { height: 56px; display: flex; align-items: center; padding: 0 14px; font-weight: 600; color: #fff; background: #16202e; font-size: 14px; letter-spacing: 0.5px; }
+:root {
+  --side-bg: #1b2431;
+  --side-bg-deep: #141c27;
+  --brand: #3b7ddd;
+}
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif; -webkit-font-smoothing: antialiased; }
+.side { background: linear-gradient(180deg, var(--side-bg) 0%, var(--side-bg-deep) 100%); color: #c4ccd8; display: flex; flex-direction: column; }
+.logo { height: 60px; display: flex; align-items: center; gap: 10px; padding: 0 20px; color: #fff; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.logo-mark { font-size: 22px; color: var(--brand); }
+.logo-text { font-weight: 700; font-size: 16px; letter-spacing: 0.3px; }
 /* 关键：覆盖 el-menu 自身白底（默认 --el-menu-bg-color:#fff），整侧栏透色融入深色背景 */
 .side-menu {
-  border-right: none; flex: 1; background: transparent;
+  border-right: none; flex: 1; overflow-y: auto; background: transparent; padding-top: 4px;
   --el-menu-bg-color: transparent;
-  --el-menu-text-color: #c3ccd9;
+  --el-menu-text-color: #c4ccd8;
   --el-menu-active-color: #fff;
-  --el-menu-hover-bg-color: rgba(255, 255, 255, 0.07);
+  --el-menu-hover-bg-color: rgba(255, 255, 255, 0.06);
 }
-/* 企业后台经典选中态：主题蓝实底 + 白字 */
-.side-menu .el-menu-item { height: 46px; line-height: 46px; margin: 4px 8px; border-radius: 6px; transition: background-color 0.15s ease, color 0.15s ease; }
-.side-menu .el-menu-item.is-active { color: #fff; background: #409eff; font-weight: 600; }
-.side-menu .el-menu-item.is-active:hover { background: #409eff; }
+.side-menu .el-menu-item { height: 44px; line-height: 44px; margin: 2px 10px; border-radius: 8px; transition: background-color 0.15s ease, color 0.15s ease; }
+.side-menu .el-menu-item .el-icon { font-size: 17px; margin-right: 10px; }
+/* 主流选中态：品牌蓝渐变实底 + 白字，左侧高亮条 */
+.side-menu .el-menu-item.is-active { color: #fff; background: linear-gradient(90deg, var(--brand), #4d8fe6); font-weight: 600; box-shadow: 0 4px 12px -4px rgba(59, 125, 221, 0.6); }
+.side-menu .el-menu-item.is-active:hover { background: linear-gradient(90deg, var(--brand), #4d8fe6); }
 .side-menu .el-menu-item:not(.is-active):hover { color: #fff; }
-/* 分组标题：置灰小字，遵循原型 .menu-group */
+/* 分组标题：置灰小字 */
 .side-menu .el-menu-item-group__title {
-  padding: 12px 16px 6px; font-size: 12px; color: #7c8aa3; line-height: 1;
+  padding: 14px 20px 6px; font-size: 12px; color: #7484a0; line-height: 1; letter-spacing: 0.5px;
 }
-.side-foot { padding: 12px 14px; font-size: 11px; color: #63718a; border-top: 1px solid #16202e; }
-.topbar { display: flex; align-items: center; border-bottom: 1px solid #e4e7ed; background: #fff; }
+.side-foot { padding: 14px 20px; font-size: 11px; color: #61708a; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.topbar { display: flex; align-items: center; border-bottom: 1px solid #eef0f3; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02); }
 .user-chip { display: flex; align-items: center; gap: 6px; cursor: pointer; outline: none; }
 .user-name { font-size: 13px; color: #303133; }
-.main { background: #f5f7fa; }
+.main { background: #f4f6f9; }
 </style>

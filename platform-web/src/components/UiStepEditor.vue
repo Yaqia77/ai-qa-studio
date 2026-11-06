@@ -32,7 +32,7 @@ const isExpect = (action: string) => action.startsWith("expect_");
 const LOC_PH = "定位器，如 #username / css=.btn / xpath=//div / role=button,name=登录";
 const VAL_PH = "取值，支持 {{变量}} 引用";
 
-// 五期：动作自带 hint 优先作为对应输入框占位提示（如 upload 取值=文件路径、
+// 动作自带 hint 优先作为对应输入框占位提示（如 upload 取值=文件路径、
 // switch_frame 定位器=iframe 选择器、expect_attr 取值=属性名=期望值）。无 hint 时用通用占位。
 // hint 是单字段：仅当该动作「只需定位器不需取值」时判定它描述定位器，否则描述取值。
 const locatorPh = (action: string) => {

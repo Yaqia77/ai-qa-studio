@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""App（移动端）自动化引擎（阶段 3 预留位，当前为脚手架）。
+"""App（移动端）自动化引擎（当前为脚手架，预留位）。
 
 对齐统一引擎契约（core.engines.base.Engine）：key/label/test_module + matches/validate/execute。
 - matches：认领 `.apjson` 载体（与 web 的 `.json`、api 的其余后缀互斥，见 core.engines 注册表）；
@@ -30,7 +30,7 @@ class AppRunResult:
 
 
 # 驱动未接入时的统一提示（execute 与 test_app 收集端共用，口径一致）
-NOT_IMPLEMENTED = "App 自动化驱动尚未接入（脚手架阶段，用例已收集；三期接入 Appium 后可执行）"
+NOT_IMPLEMENTED = "App 自动化驱动尚未接入（脚手架阶段，用例已收集；接入 Appium 后可执行）"
 
 
 class AppRunner:

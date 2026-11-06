@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""App 用例查询与写回接口：读写复用 backend.app.app_case_store（校验后原子落 JSON）。阶段 3 预留位（脚手架）。
+"""App 用例查询与写回接口：读写复用 backend.app.app_case_store（校验后原子落 JSON），当前为预留位（脚手架）。
 
 与 /api/cases、/api/ui-cases 分轨：接口走 Excel、UI 走 .json、App 走 .apjson。项目 kind=app 时前端把
 项目的 file（.apjson）透传给本组接口；权限直接复用 case:write / case:delete，执行/报告链路复用。

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""upsert_many.written_names 契约单测（二期 P4：文档一键生成的数据回路）。
+"""upsert_many.written_names 契约单测（文档一键生成的数据回路）。
 
 Agent 拿 written_names 逐接口生成用例，语义必须锁死：
 - 新建 / 覆盖（同名 overwrite）/ 同名已存在 skipped —— 三种都算"有效登记"要回带；

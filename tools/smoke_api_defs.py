@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""接口定义管理（设计文档 2.2）冒烟：校验同源 + Excel 聚合 + OpenAPI 导入 + 引用保护 + 用例骨架。
+"""接口定义管理冒烟：校验同源 + Excel 聚合 + OpenAPI 导入 + 引用保护 + 用例骨架。
 
 用法：先启动后端
     .venv\Scripts\python.exe -m uvicorn backend.main:app --port 8000

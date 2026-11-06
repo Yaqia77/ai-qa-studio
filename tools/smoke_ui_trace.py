@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""UI 自动化六期观测与诊断端到端冒烟（失败 trace 留存 + 下载 + flaky 字段）。
+"""UI 自动化观测与诊断端到端冒烟（失败 trace 留存 + 下载 + flaky 字段）。
 
 用法：先启动后端（须用装了 playwright 的 venv 解释器），再执行本脚本
     .venv\Scripts\python.exe -m uvicorn backend.main:app --port 8000

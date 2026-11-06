@@ -1,6 +1,6 @@
 """UI 登录态「采集 / 复用」编排：连接会话注册表（ui_session_store）与执行器（WebEngine/UiRunner）。
 
-设计文档《UI自动化二期-登录态复用设计方案.md》步骤 3（采集落盘）+ 步骤 4（复用解析 + 就地重采）。
+两条链路：采集落盘 + 复用解析（含过期就地重采）。
 core 不依赖 backend，故 UiRunner 的 storage_state attach/collect 通过 provider/committer 回调注入；
 本模块给出这两个回调的 backend 侧实现，以及「单条采集用例同步跑一遍」的编排，供路由与 conftest 共用
 （单一事实来源，避免采集逻辑在两处漂移）。

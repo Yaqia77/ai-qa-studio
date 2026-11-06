@@ -55,7 +55,7 @@ app.include_router(ui_cases.router)
 app.include_router(ui_sessions.router)
 app.include_router(app_cases.router)
 
-# Agent 桥接（M2）：仅当 config.yaml 的 agent.enabled=true 才注册，
+# Agent 桥接：仅当 config.yaml 的 agent.enabled=true 才注册，
 # 缺省关闭 → 端点不进 /openapi.json，存量接口与页面行为零回归。
 if agent_bridge.agent_enabled():
     app.include_router(agent_bridge.router)

@@ -72,6 +72,9 @@ docs/
 .idea/
 .vscode/
 
+# Qoder IDE 本地状态（本地安装的 Skill / 规则等，不入库）
+.qoder/
+
 # 系统文件
 .DS_Store
 Thumbs.db

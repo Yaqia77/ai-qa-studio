@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""App 用例库：一个项目一个 JSON 文件（data/cases/<id>.apjson）。阶段 3 预留位（脚手架）。
+"""App 用例库：一个项目一个 JSON 文件（data/cases/<id>.apjson），当前为预留位（脚手架）。
 
 设计：与 UI 用例（ui_case_store）同构，只是把"浏览器"换成"平台（android/ios）+ 被测应用包名"，
 动作集换成移动端手势/断言。载体扩展名用 `.apjson` 以与 UI 的 `.json`、接口的 Excel 在注册表分流上互斥。
 校验不通过绝不落盘（临时文件 + os.replace 原子替换），错误口径与 ui_case_store 对齐
 （AppCaseError.kind ∈ invalid/not_found/conflict/locked），便于路由统一映射 HTTP 状态。
 
-实际驱动（Appium 等）待三期接入；本模块只负责用例的规范化存储与校验，前端可先行编辑维护。
+实际驱动（Appium 等）尚未接入；本模块只负责用例的规范化存储与校验，前端可先行编辑维护。
 """
 import json
 import os

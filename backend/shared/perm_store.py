@@ -42,7 +42,7 @@ CATALOG: dict[str, tuple[str, str]] = {
 # 代码基线：文件不存在时的默认矩阵，也是「恢复默认」的目标
 DEFAULT_MATRIX: dict[str, list[str]] = {
     # agent_svc（Agent 服务账号）仅授予 case:write + api:manage：读接口登录态即覆盖；
-    # api:manage 是二期文档一键生成的最小必需写面（复用 POST /api/defs/import/openapi，
+    # api:manage 是文档一键生成的最小必需写面（复用 POST /api/defs/import/openapi，
     # 平台零新端点）；其余管理类权限一律不给
     "case:write": ["admin", "tl", "qa", "agent_svc"],
     "case:delete": ["admin", "tl"],

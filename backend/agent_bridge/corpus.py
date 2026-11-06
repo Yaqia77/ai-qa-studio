@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """知识库语料导出：把接口定义 / 存量用例转成统一记录形状（设计文档 4.2 / 4.3）。
 
-一期只导出两域：
+当前只导出两域：
 - **D1 契约域**：来自 `data/api_defs.json`（`api_def_store.list_defs`），一个接口一块；
 - **D2 用例域**：来自各接口项目的 Excel（`core.excel_loader`），一条用例一块。
 
@@ -29,7 +29,7 @@ from core import excel_loader
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM = "interface-auto"
 
-# 一期平台能导出的域；其余域（执行/业务/规范）结构预留，导出为空但明确标注 unsupported
+# 平台能导出的域；其余域（执行/业务/规范）结构预留，导出为空但明确标注 unsupported
 EXPORTABLE_DOMAINS = ("contract", "case")
 ALL_DOMAINS = ("contract", "case", "execution", "business", "convention")
 
@@ -236,11 +236,11 @@ def case_records(base_url: str, since: str = "", *, project_id: str = "",
 
 def export_domain(domain: str, base_url: str, *, since: str = "",
                   project_id: str = "", file: str = "") -> list[dict]:
-    """按域导出记录。domain 合法但一期未实现 → 返回空（不误报错误，也不假装有权重数据）。"""
+    """按域导出记录。domain 合法但暂未实现 → 返回空（不误报错误，也不假装有权重数据）。"""
     if domain == "contract":
         return contract_records(base_url, since=since)
     if domain == "case":
         return case_records(base_url, since=since, project_id=project_id, file=file)
     if domain in ALL_DOMAINS:
-        return []  # execution/business/convention：一期结构预留，导出为空
+        return []  # execution/business/convention：结构预留，导出为空
     raise ValueError(f"未知语料域 {domain!r}（可用: {list(ALL_DOMAINS)}）")

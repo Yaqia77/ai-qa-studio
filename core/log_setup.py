@@ -4,7 +4,7 @@
 原属 core.runner，因 api/web 两条链路都要用（tests/conftest 的 app_config fixture 统一初始化），
 故提到 core 顶层共享位置，避免 conftest 反向依赖某个具体引擎包。
 
-四期并行化改造：xdist controller 与各 worker 是独立进程、并发写日志。旧实现
+并行化改造：xdist controller 与各 worker 是独立进程、并发写日志。旧实现
 「{time} 时间戳文件名 + retention=10」在两类场景致命：
 - 每个进程 add sink 时 loguru 会按同 pattern glob+stat+删除旧文件：多进程并发下是
   TOCTOU 竞态，且可能删掉**其他进程正打开的文件**（Windows 表现为

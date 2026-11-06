@@ -1,7 +1,6 @@
 """UI 登录态会话库：全局一个 JSON 注册表（data/ui_sessions.json）。
 
-二期「登录态（storage_state）复用」的数据层，见设计文档
-《UI自动化二期-登录态复用设计方案.md》实施步骤 1。
+登录态（storage_state）复用的数据层：全局一个会话注册表。
 
 设计对齐 backend.ui_case_store（唯二范式来源，降低学习成本）：
 - 同一套错误口径 UiSessionError.kind ∈ invalid/not_found/conflict/locked，路由据此映射 HTTP 状态；

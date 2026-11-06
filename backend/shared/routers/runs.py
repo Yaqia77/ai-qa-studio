@@ -205,7 +205,7 @@ def create_run(body: RunCreate, _: dict = Depends(authz.require_perm("run:create
             cmd.append("--cases=" + ",".join(ids))
     if body.vars:
         cmd.append("--vars=" + json.dumps(body.vars, ensure_ascii=False))
-    # 四期并行：workers 仅对 UI 项目（.json 用例）透传；接口/App 批次忽略（参数留在 args 供审计）。
+    # 并行：workers 仅对 UI 项目（.json 用例）透传；接口/App 批次忽略（参数留在 args 供审计）。
     # 并行度折算与依赖降级护栏在下游：main.py 折算上限，conftest 收集期决定分片/软串行。
     if body.workers and f.suffix.lower() == ".json":
         cmd.append(f"--workers={body.workers}")
@@ -461,7 +461,7 @@ def get_attachment(run_id: str, filename: str):
 def get_trace(run_id: str, filename: str):
     """从批次 allure-results 取 trace zip（按文件名）。
 
-    六期：仅失败 UI 用例产出。限定 .zip + 纯文件名 + 限定目录，防路径穿越；与截图/报告一致走登录态。
+    仅失败 UI 用例产出。限定 .zip + 纯文件名 + 限定目录，防路径穿越；与截图/报告一致走登录态。
     """
     if "/" in filename or "\\" in filename or ".." in filename:
         raise HTTPException(status_code=400, detail="非法 trace 文件名")

@@ -373,6 +373,11 @@ env:
 细粒度权限由各接口的 `require_perm(...)` 二次校验（前端 `v-perm` 只做按钮显隐，不是安全边界）。
 
 ```bash
+# 一键启动（推荐）：平台后端 8000 + qa-agent 8100 + 前端 5173 各自独立窗口，健康探测就绪后给出访问入口；
+# 重复执行安全（先清旧监听进程再拉起）；需 qa-agent 仓位于 ./qa-agent，agent_svc 密码存 logs\_svc_pw.txt（已 gitignore）
+powershell -ExecutionPolicy Bypass -File .\start_all.ps1
+# 一键停止：
+powershell -ExecutionPolicy Bypass -File .\stop_all.ps1
 # 后端（首次启动自动播种 5 个角色账号）
 .venv\Scripts\python.exe -m uvicorn backend.main:app --reload --port 8000
 # 前端

@@ -256,7 +256,7 @@ export const api = {
       `/ui-cases/${encodeURIComponent(caseId)}/move`, body, { params: { file } }
     ).then((r) => r.data),
 
-  /* ---------- UI 登录态会话（二期 storage_state 复用，全局注册表，走 /api/ui-sessions） ---------- */
+  /* ---------- UI 登录态会话（storage_state 复用，全局注册表，走 /api/ui-sessions） ---------- */
   listUiSessions: () => http.get<UiSession[]>("/ui-sessions").then((r) => r.data),
 
   getUiSession: (id: string) =>
@@ -283,7 +283,7 @@ export const api = {
   collectUiSession: (id: string) =>
     http.post<UiSessionCollectResult>(`/ui-sessions/${encodeURIComponent(id)}/collect`).then((r) => r.data),
 
-  /* ---------- App 用例（项目 kind=app，载体 .apjson，走 /api/app-cases；阶段 3 预留位） ---------- */
+  /* ---------- App 用例（项目 kind=app，载体 .apjson，走 /api/app-cases；预留位） ---------- */
   listAppCases: (params: {
     file: string;
     module?: string;
@@ -399,7 +399,7 @@ export const api = {
     return `/api/runs/${encodeURIComponent(runId)}/attachment/${encodeURIComponent(filename)}${q}`;
   },
 
-  /** 六期失败 trace zip 下载直链（同截图取图口径，token 走 ?token= 兜底；下本地后 npx playwright show-trace 回放） */
+  /** 失败 trace zip 下载直链（同截图取图口径，token 走 ?token= 兜底；下本地后 npx playwright show-trace 回放） */
   reportTraceUrl: (runId: string, filename: string) => {
     const token = getToken();
     const q = token ? `?token=${encodeURIComponent(token)}` : "";
@@ -574,11 +574,14 @@ export const api = {
     http.put<{ case_id: string; dependencies: string[] }>(
       `/dependencies/${encodeURIComponent(caseId)}`, { dependencies: deps }).then((r) => r.data),
 
-  /* ---------- AI 生成（Agent 接入一期 M4）----------
+  /* ---------- AI 助手（qa-agent 直连）----------
    * 生成直连 qa-agent（/agent 代理 → 8100，独立服务无平台登录态）；
    * 预览/落库走平台 /api/agent/*（权威校验闸门 + case:write 权限），两条链路职责分离。
    */
-  agentHealth: () => agentHttp.get<{ skills: string[] }>("/health").then((r) => r.data),
+  agentHealth: () =>
+    agentHttp.get<{ skills: string[]; provider?: string; degraded?: boolean;
+                    web_search_enabled?: boolean;
+                    models?: string[]; default_model?: string }>("/health").then((r) => r.data),
 
   agentGenerate: (body: GenerationReq) =>
     agentHttp.post<GenerationOut>("/v1/generations", body).then((r) => r.data),
@@ -591,7 +594,7 @@ export const api = {
   agentCommitCases: (body: AgentCasesBody) =>
     http.post<AgentCommitResp>("/agent/cases/commit", body).then((r) => r.data),
 
-  /* ---------- 对话式 AI 生成（二期）：会话历史在 Agent 侧，流式走 utils/sse 不走 axios ---------- */
+  /* ---------- 对话式 AI 生成：会话历史在 Agent 侧，流式走 utils/sse 不走 axios ---------- */
   agentChatSessions: () =>
     agentHttp.get<{ items: ChatSessionInfo[] }>("/v1/chat/sessions").then((r) => r.data.items),
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * UI 登录态会话管理（二期 storage_state 复用）：全局注册表的列表 / 采集 / 增删改。
+ * UI 登录态会话管理（storage_state 复用）：全局注册表的列表 / 采集 / 增删改。
  *
  * 登录态 = 一次成功登录后导出的 Playwright storage_state（cookie + localStorage），
  * 被 UI 用例通过 session 字段引用后「开机即已登录」，从而删除重复登录步骤。

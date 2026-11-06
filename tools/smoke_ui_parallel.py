@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""UI 自动化四期端到端冒烟：用例并行执行（xdist loadgroup 分组×分片 + 依赖护栏软降级）。
+"""UI 自动化端到端冒烟：用例并行执行（xdist loadgroup 分组×分片 + 依赖护栏软降级）。
 
 用法（须用装了 playwright 的 venv 解释器启动后端，再执行本脚本）：
     .venv\Scripts\python.exe -m uvicorn backend.main:app --port 8000
     .venv\Scripts\python.exe tools\smoke_ui_parallel.py
 
-覆盖设计文档「阶段 4」的三项新证据（既有冒烟只守串行存量，不含这三条）：
+覆盖并行执行的三项新证据（既有冒烟只守串行存量，不含这三条）：
 1. 并行生效：单组 6 条用例、workers=2 → 恰 2 个分片；执行日志「新启浏览器束」== 分片数(2)，
    统一回收 2 束（每 worker 一束）；同一分片的用例钉在同一 worker（loadgroup 组原子性）。
 2. 重试正交：并行批次里的 flaky 用例（retry=1）仍转绿且报告标注「重试 1 次后通过」。

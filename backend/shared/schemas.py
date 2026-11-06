@@ -44,7 +44,7 @@ class RunCreate(BaseModel):
     vars: dict[str, Any] | None = Field(default=None, description="运行前变量覆盖（键值映射，覆盖同名 secret/Excel/YAML 变量）")
     file: str = Field(default="data/api_cases.xlsx", description="用例文件或目录（相对项目根）")
     workers: int | None = Field(default=None, ge=1, le=4,
-                                description="UI 批次并行 worker 数（四期；仅 .json 用例文件生效，其余批次忽略；含依赖用例自动降级串行）")
+                                description="UI 批次并行 worker 数（仅 .json 用例文件生效，其余批次忽略；含依赖用例自动降级串行）")
 
 
 class RunOut(BaseModel):

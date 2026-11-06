@@ -1,6 +1,6 @@
 """UI 登录态会话接口：读写复用 backend.ui.ui_session_store，采集编排走 session_collect。
 
-二期「storage_state 复用」的 REST 层（见设计文档《UI自动化二期-登录态复用设计方案.md》步骤 5）。
+「storage_state 复用」的 REST 层。
 安全边界：
 - 任何接口都不回传 storage_state 实体内容，只回传注册表元数据 + 派生状态（valid/expired/not_collected/failed）；
 - 写操作（新建/更新/删除/采集）需 session:manage，查看列表/状态仅需登录态；

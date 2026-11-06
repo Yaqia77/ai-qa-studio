@@ -204,7 +204,7 @@ const fmtDur = (ms: number) => (ms >= 1000 ? (ms / 1000).toFixed(2) + "s" : ms +
 const fmtRate = (r: number) => Math.round(r * 100) + "%";
 const toReport = (runId: string) => router.push({ path: "/report", query: { runId } });
 
-/* ============ Flaky 趋势（六期观测与诊断） ============ */
+/* ============ Flaky 趋势（观测与诊断） ============ */
 interface FlakyRow {
   case_id: string;
   name: string;
@@ -214,7 +214,7 @@ interface FlakyRow {
   retried: number;  // 发生过重试的次数
   maxAttempts: number;
 }
-// 复用已加载的 batchCases（含六期结构化 attempts/retried/flaky），按 case_id 跨批次聚合
+// 复用已加载的 batchCases（含结构化 attempts/retried/flaky），按 case_id 跨批次聚合
 const flakyRows = computed<FlakyRow[]>(() => {
   const map = new Map<string, FlakyRow>();
   for (const bc of batchCases.value) {
@@ -419,7 +419,7 @@ onMounted(load);
       </div>
     </div>
 
-    <!-- Flaky 趋势（六期观测与诊断）：靠重试蒙过的不稳定用例排行 -->
+    <!-- Flaky 趋势（观测与诊断）：靠重试蒙过的不稳定用例排行 -->
     <section class="panel">
       <header class="panel-head">
         <span class="head-bar"></span>
@@ -550,7 +550,7 @@ onMounted(load);
 .txt-ok { color: #2f9e44; }
 .txt-fail { color: #e03131; }
 
-/* Flaky 趋势（六期） */
+/* Flaky 趋势 */
 .flaky-list { display: flex; flex-direction: column; gap: 9px; }
 .flaky-row { display: flex; align-items: center; gap: 10px; }
 .flaky-name { font-family: Consolas, Monaco, monospace; font-size: 11px; color: #5b6470; width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }

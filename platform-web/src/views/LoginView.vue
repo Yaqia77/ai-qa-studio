@@ -8,7 +8,7 @@
 import { reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { Lock, User } from "@element-plus/icons-vue";
+import { Document, Lock, MagicStick, TrendCharts, User, VideoPlay } from "@element-plus/icons-vue";
 import { login } from "../stores/auth";
 
 const route = useRoute();
@@ -60,20 +60,21 @@ async function submit() {
       <!-- 左侧品牌区（窄屏隐藏） -->
       <div class="brand">
         <div class="brand-logo">● Interface Auto</div>
-        <h1 class="brand-title">Excel 驱动<br />接口自动化测试平台</h1>
-        <p class="brand-desc">用例即 Excel · 配置即环境 · 执行即报告</p>
+        <h1 class="brand-title">Excel 驱动的一站式<br />自动化测试平台</h1>
+        <p class="brand-desc">接口 · UI · AI 助手｜用例即 Excel · 配置即环境 · 执行即报告</p>
         <ul class="brand-feats">
-          <li>📋 用例管理 · 智能导入 · 空白模板</li>
-          <li>🚀 执行中心 · 定时任务 · 依赖编排</li>
-          <li>📈 Allure 报告 · 统计报表 · 质量趋势</li>
-          <li>🛡️ RBAC 权限 · 操作审计 · 凭证隔离</li>
+          <li><el-icon><Document /></el-icon>用例管理 · 智能导入 · Excel 批量维护</li>
+          <li><el-icon><VideoPlay /></el-icon>执行中心 · 定时任务 · 依赖编排</li>
+          <li><el-icon><TrendCharts /></el-icon>Allure 报告 · 统计报表 · 质量趋势</li>
+          <li><el-icon><MagicStick /></el-icon>AI 助手 · 对话式生成用例 · 即问即答</li>
+          <li><el-icon><Lock /></el-icon>RBAC 权限 · 操作审计 · 凭证隔离</li>
         </ul>
       </div>
 
       <!-- 右侧登录卡 -->
       <el-card class="login-card" :class="{ shake }" shadow="always">
         <div class="login-logo">● 欢迎登录</div>
-        <div class="login-sub">Interface Auto 测试平台</div>
+        <div class="login-sub">Interface Auto 一站式自动化测试平台</div>
 
         <el-alert
           v-if="errorMsg"
@@ -124,7 +125,7 @@ async function submit() {
       </el-card>
     </div>
 
-    <div class="login-foot">interface-auto · FastAPI + Vue3 + Excel</div>
+    <div class="login-foot">Interface Auto · 接口 · UI · AI 助手</div>
   </div>
 </template>
 
@@ -160,10 +161,12 @@ async function submit() {
 .brand-desc { font-size: 14px; color: #a8bdd9; margin: 0 0 26px; letter-spacing: 1px; }
 .brand-feats { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
 .brand-feats li {
+  display: flex; align-items: center; gap: 8px;
   font-size: 13px; color: #cdd9ea; padding: 9px 14px;
   background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 8px; backdrop-filter: blur(4px);
 }
+.brand-feats .el-icon { color: #7fb3ff; font-size: 15px; flex-shrink: 0; }
 
 /* 登录卡 */
 .login-card { width: 400px; border-radius: 14px; padding: 10px 14px 4px; border: none; flex-shrink: 0; }
