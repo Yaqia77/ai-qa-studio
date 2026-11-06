@@ -59,7 +59,7 @@ async function submit() {
     <div class="login-stage">
       <!-- 左侧品牌区（窄屏隐藏） -->
       <div class="brand">
-        <div class="brand-logo">● Interface Auto</div>
+        <div class="brand-logo">● 自动化测试平台</div>
         <h1 class="brand-title">Excel 驱动的一站式<br />自动化测试平台</h1>
         <p class="brand-desc">接口 · UI · AI 助手｜用例即 Excel · 配置即环境 · 执行即报告</p>
         <ul class="brand-feats">
@@ -74,7 +74,7 @@ async function submit() {
       <!-- 右侧登录卡 -->
       <el-card class="login-card" :class="{ shake }" shadow="always">
         <div class="login-logo">● 欢迎登录</div>
-        <div class="login-sub">Interface Auto 一站式自动化测试平台</div>
+        <div class="login-sub">一站式自动化测试平台</div>
 
         <el-alert
           v-if="errorMsg"
@@ -125,7 +125,7 @@ async function submit() {
       </el-card>
     </div>
 
-    <div class="login-foot">Interface Auto · 接口 · UI · AI 助手</div>
+    <div class="login-foot">自动化测试平台 · 接口 · UI · AI 助手</div>
   </div>
 </template>
 

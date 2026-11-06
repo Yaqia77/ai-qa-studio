@@ -30,7 +30,7 @@ const ROLE_DESC: Record<string, string> = {
   qa: "主力：用例、场景、执行",
   dev: "开发：查看 + 触发执行",
   viewer: "只读访客：全站仅查看",
-  agent_svc: "qa-agent 服务账号：只读 + 用例写入，由 tools/init_agent_svc.py 创建",
+  agent_svc: "智能助手服务账号：只读 + 用例写入，由初始化脚本创建",
 };
 
 const roleUserCount = computed(() => {

@@ -3,6 +3,7 @@ import axios from "axios";
 import { ElMessage } from "element-plus";
 import type { CaseItem, CasePage, CaseMeta, UiCaseItem, UiCasePage, UiCaseMeta, UiSession, UiSessionStatus, UiSessionCollectResult, UiSessionMeta, AppCaseItem, AppCasePage, AppCaseMeta, CaseHistoryResp, EnvsResp, EnvsUpdate, RunCasesResp, RunCaseDetail, RunItem, SecretsResp, PlanItem, PlanCreateReq, PlanUpdateReq, WebhookItem, WebhookCreateReq, WebhookUpdateReq, ScheduleItem, ScheduleCreateReq, ScheduleUpdateReq, LoginResp, UserInfo, UserCreateReq, UserUpdateReq, AuditItem, AuditLogsResp, PermMatrixResp, PermSaveResp, ScriptItem, ScriptCreateReq, ScriptUpdateReq, ScriptMeta, ApiDefItem, ApiDefCreateReq, ApiDefUpdateReq, ApiDefMeta, AggregateResult, OpenApiImportResult, SkeletonReq, SkeletonResult, ImportPreviewResp, ImportCaseDraft, Project, UiImportPreviewResp, GenerationReq, GenerationOut, AgentPreviewResp, AgentCommitResp, AgentCasesBody, ChatSessionInfo, ChatSessionDetail } from "../types";
 import { clearToken, getToken } from "../utils/session";
+import { friendlyAgentError, isUserReadable } from "../utils/errors";
 
 const http = axios.create({ baseURL: "/api", timeout: 30000 });
 
@@ -30,9 +31,10 @@ http.interceptors.response.use(
       }
       return Promise.reject(error);
     }
-    // 错误归一：后端 detail 优先，其次网络层信息
+    // 错误归一：后端 detail 面向用户时直接展示；技术性文案（含异常原文/英文报错）翻译成可读提示
     const detail = error.response?.data?.detail ?? error.message;
-    ElMessage.error(typeof detail === "string" ? detail : JSON.stringify(detail));
+    const raw = typeof detail === "string" ? detail : JSON.stringify(detail);
+    ElMessage.error(isUserReadable(raw) ? raw : friendlyAgentError("internal_error", raw).msg);
     return Promise.reject(error);
   }
 );
@@ -54,15 +56,20 @@ agentHttp.interceptors.request.use((cfg) => {
 agentHttp.interceptors.response.use(
   (resp) => resp,
   (error) => {
-    const status = error.response?.status;
+    // 后台状态探测（silent）失败不弹错：页面已有「在线/不可达」指示，掉线时逐条刷屏只会扰民
+    if (error.config?.silent) return Promise.reject(error);
+    const status: number = error.response?.status || 0;
     let msg: string;
     if (!error.response) {
-      msg = "Agent 服务不可达：请确认 qa-agent 已在 8100 端口启动（或生产反代已配 /agent）";
+      msg = "智能助手服务暂时不可达，请稍后重试或联系管理员";
     } else if (status === 401) {
-      msg = "Agent 网关鉴权失败：请在浏览器 localStorage 设置 agent_key 后重试";
+      msg = "智能助手鉴权失败，请联系管理员检查接入配置";
     } else {
-      const d = error.response.data?.detail ?? error.response.data?.code;
-      msg = typeof d === "string" ? d : `Agent 调用失败（HTTP ${status}）`;
+      // detail 面向用户才直接展示；技术性文案（异常原文/端口/内部服务名）一律翻译成可读提示，
+      // 5xx 归入服务器内部错误；5xx 且无统一错误体（如开发代理层）几乎总是 Agent 掉了，提示不可达
+      const d = typeof error.response.data?.detail === "string" ? error.response.data.detail : "";
+      if (!d && status >= 500) msg = "智能助手服务暂时不可达，请稍后重试或联系管理员";
+      else msg = isUserReadable(d) ? d : friendlyAgentError(status >= 500 ? "internal_error" : undefined, d).msg;
     }
     ElMessage.error(msg);
     return Promise.reject(error);
@@ -578,10 +585,11 @@ export const api = {
    * 生成直连 qa-agent（/agent 代理 → 8100，独立服务无平台登录态）；
    * 预览/落库走平台 /api/agent/*（权威校验闸门 + case:write 权限），两条链路职责分离。
    */
+  /* ---------- 后台探测与列表：失败静默（状态指示/空列表兜底），避免服务掉线时刷屏报错 ---------- */
   agentHealth: () =>
     agentHttp.get<{ skills: string[]; provider?: string; degraded?: boolean;
                     web_search_enabled?: boolean;
-                    models?: string[]; default_model?: string }>("/health").then((r) => r.data),
+                    models?: string[]; default_model?: string }>("/health", { silent: true }).then((r) => r.data),
 
   agentGenerate: (body: GenerationReq) =>
     agentHttp.post<GenerationOut>("/v1/generations", body).then((r) => r.data),
@@ -596,11 +604,11 @@ export const api = {
 
   /* ---------- 对话式 AI 生成：会话历史在 Agent 侧，流式走 utils/sse 不走 axios ---------- */
   agentChatSessions: () =>
-    agentHttp.get<{ items: ChatSessionInfo[] }>("/v1/chat/sessions").then((r) => r.data.items),
+    agentHttp.get<{ items: ChatSessionInfo[] }>("/v1/chat/sessions", { silent: true }).then((r) => r.data.items),
 
   agentChatSession: (sid: string) =>
     agentHttp.get<ChatSessionDetail>(`/v1/chat/sessions/${encodeURIComponent(sid)}`).then((r) => r.data),
 
   agentChatDelete: (sid: string) =>
-    agentHttp.delete<{ id: string }>(`/v1/chat/sessions/${encodeURIComponent(sid)}`).then((r) => r.data),
+    agentHttp.delete<{ id: string }>(`/v1/chat/sessions/${encodeURIComponent(sid)}`, { silent: true }).then((r) => r.data),
 };

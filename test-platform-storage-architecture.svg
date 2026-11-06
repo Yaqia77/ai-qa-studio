@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 920" width="960" height="920">
+  <style>text { font-family: Inter, -apple-system, SF Pro Display, PingFang SC, Microsoft YaHei, Microsoft JhengHei, SimHei, sans-serif; fill: #f0f6fc; }</style>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117"/><stop offset="50%" stop-color="#161b22"/><stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+    <radialGradient id="glow-blue" cx="30%" cy="30%" r="45%">
+      <stop offset="0%" stop-color="rgba(88,166,255,0.14)"/><stop offset="100%" stop-color="rgba(88,166,255,0)"/>
+    </radialGradient>
+    <radialGradient id="glow-purple" cx="72%" cy="65%" r="40%">
+      <stop offset="0%" stop-color="rgba(188,140,255,0.11)"/><stop offset="100%" stop-color="rgba(188,140,255,0)"/>
+    </radialGradient>
+    <linearGradient id="text-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#bc8cff"/>
+    </linearGradient>
+    <linearGradient id="mysql-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(88,166,255,0.14)"/><stop offset="100%" stop-color="rgba(188,140,255,0.14)"/>
+    </linearGradient>
+    <filter id="node-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#58a6ff" flood-opacity="0.45"/>
+    </filter>
+    <marker id="arr-blue" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#58a6ff"/></marker>
+    <marker id="arr-blue-rev" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M10,0 L0,4 L10,8 Z" fill="#58a6ff"/></marker>
+    <marker id="arr-orange" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#f78166"/></marker>
+    <marker id="arr-orange-rev" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M10,0 L0,4 L10,8 Z" fill="#f78166"/></marker>
+    <marker id="arr-green" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#3fb950"/></marker>
+    <marker id="arr-green-rev" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M10,0 L0,4 L10,8 Z" fill="#3fb950"/></marker>
+    <marker id="arr-purple" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#bc8cff"/></marker>
+    <marker id="arr-purple-rev" viewBox="0 0 10 8" refX="1" refY="4" markerWidth="9" markerHeight="7" orient="auto"><path d="M10,0 L0,4 L10,8 Z" fill="#bc8cff"/></marker>
+  </defs>
+  <rect width="960" height="920" fill="url(#bg)"/>
+  <rect width="960" height="920" fill="url(#glow-blue)"/>
+  <rect width="960" height="920" fill="url(#glow-purple)"/>
+  <text x="480" y="46" text-anchor="middle" font-size="20" font-weight="700" fill="url(#text-grad)">自动化测试平台 · 数据存储架构（MySQL + Redis）</text>
+  <text x="480" y="70" text-anchor="middle" font-size="12" fill="#8b949e">Excel 用例 → 结构化落库 · 本地报告 → 三级存储 · Runner 集群经 Redis 队列分发</text>
+  <!-- ===== 箭头层 ===== -->
+  <line x1="80" y1="120" x2="337" y2="120" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <line x1="430" y1="149" x2="430" y2="238" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-start="url(#arr-blue-rev)" marker-end="url(#arr-blue)"/>
+  <text x="440" y="200" font-size="11" fill="#8b949e">管理 · 触发执行 · 查看报告</text>
+  <line x1="312" y1="275" x2="338" y2="275" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-start="url(#arr-blue-rev)" marker-end="url(#arr-blue)"/>
+  <text x="325" y="225" text-anchor="middle" font-size="11" fill="#8b949e">Agent 生成用例提交 / 失败分析回调</text>
+  <line x1="220" y1="312" x2="220" y2="438" stroke="#bc8cff" stroke-width="1.6" opacity="0.9" marker-start="url(#arr-purple-rev)" marker-end="url(#arr-purple)"/>
+  <text x="228" y="375" font-size="11" fill="#bc8cff">会话上下文缓存</text>
+  <line x1="352" y1="312" x2="352" y2="438" stroke="#f78166" stroke-width="1.8" opacity="0.9" marker-end="url(#arr-orange)"/>
+  <text x="344" y="348" text-anchor="end" font-size="11" fill="#f78166">任务入队</text>
+  <line x1="398" y1="312" x2="398" y2="438" stroke="#3fb950" stroke-width="1.6" opacity="0.9" marker-start="url(#arr-green-rev)" marker-end="url(#arr-green)"/>
+  <text x="406" y="382" font-size="11" fill="#3fb950">分布式锁</text>
+  <line x1="460" y1="312" x2="460" y2="438" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-start="url(#arr-blue-rev)" marker-end="url(#arr-blue)"/>
+  <text x="470" y="348" font-size="11" fill="#8b949e">用例/报告读写</text>
+  <line x1="640" y1="312" x2="640" y2="438" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <text x="650" y="382" font-size="11" fill="#8b949e">解析落库</text>
+  <line x1="250" y1="612" x2="250" y2="638" stroke="#f78166" stroke-width="1.8" opacity="0.9" marker-end="url(#arr-orange)"/>
+  <text x="260" y="630" font-size="11" fill="#f78166">BRPOP 领取任务</text>
+  <line x1="160" y1="638" x2="160" y2="612" stroke="#3fb950" stroke-width="1.6" opacity="0.9" marker-end="url(#arr-green)"/>
+  <text x="152" y="622" text-anchor="end" font-size="11" fill="#3fb950">状态/心跳</text>
+  <line x1="460" y1="638" x2="460" y2="612" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <text x="470" y="630" font-size="11" fill="#8b949e">结果明细落库</text>
+  <line x1="770" y1="638" x2="770" y2="612" stroke="#58a6ff" stroke-width="1.8" opacity="0.85" marker-end="url(#arr-blue)"/>
+  <text x="780" y="630" font-size="11" fill="#8b949e">文件上传</text>
+  <!-- ===== 应用服务层容器 ===== -->
+  <rect x="110" y="190" width="760" height="200" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="6,4" data-graph-role="container"/>
+  <text x="125" y="214" font-size="13" font-weight="600" fill="#58a6ff">应用服务层 · Platform Services</text>
+  <!-- ===== 存储层容器 ===== -->
+  <rect x="110" y="440" width="300" height="170" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="6,4" data-graph-role="container"/>
+  <rect x="430" y="440" width="260" height="170" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="6,4" data-graph-role="container"/>
+  <rect x="710" y="440" width="160" height="170" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="6,4" data-graph-role="container"/>
+  <!-- ===== 执行层容器 ===== -->
+  <rect x="110" y="640" width="760" height="140" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.12)" stroke-dasharray="6,4" data-graph-role="container"/>
+  <text x="125" y="668" font-size="13" font-weight="600" fill="#f78166">执行层 · Runner 集群（按队列积压水平扩展）</text>
+  <!-- ===== 用户 + Web ===== -->
+  <circle cx="62" cy="104" r="9" fill="none" stroke="#f0f6fc" stroke-width="1.6"/>
+  <line x1="62" y1="113" x2="62" y2="140" stroke="#f0f6fc" stroke-width="1.6"/>
+  <line x1="48" y1="121" x2="76" y2="121" stroke="#f0f6fc" stroke-width="1.6"/>
+  <line x1="62" y1="140" x2="52" y2="156" stroke="#f0f6fc" stroke-width="1.6"/>
+  <line x1="62" y1="140" x2="72" y2="156" stroke="#f0f6fc" stroke-width="1.6"/>
+  <text x="62" y="174" text-anchor="middle" font-size="12" fill="#8b949e">用户 / CI</text>
+  <rect x="340" y="95" width="180" height="52" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="348" y1="96" x2="512" y2="96" stroke="rgba(255,255,255,0.25)"/>
+  <text x="430" y="118" text-anchor="middle" font-size="14" font-weight="600">Web 控制台</text>
+  <text x="430" y="137" text-anchor="middle" font-size="11" fill="#8b949e">用例管理 · 报告页面</text>
+  <!-- ===== 应用层节点 ===== -->
+  <rect x="130" y="240" width="180" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="138" y1="241" x2="302" y2="241" stroke="rgba(255,255,255,0.25)"/>
+  <path d="M 215 254 L 219 262 L 228 263 L 221 269 L 223 278 L 215 273 L 207 278 L 209 269 L 202 263 L 211 262 Z" fill="#bc8cff"/>
+  <text x="220" y="288" text-anchor="middle" font-size="14" font-weight="600">Agent 服务</text>
+  <text x="220" y="302" text-anchor="middle" font-size="11" fill="#8b949e">用例生成 · 失败分析</text>
+  <rect x="340" y="240" width="180" height="70" rx="12" fill="url(#mysql-grad)" stroke="rgba(255,255,255,0.15)" filter="url(#node-glow)"/>
+  <rect x="345" y="245" width="170" height="60" rx="10" fill="none" stroke="#58a6ff" stroke-opacity="0.45"/>
+  <g stroke="#58a6ff" stroke-width="1.5" opacity="0.9" fill="none"><circle cx="425" cy="260" r="7"/><circle cx="425" cy="260" r="2.5" fill="#58a6ff" stroke="none"/><line x1="425" y1="267" x2="425" y2="272"/></g>
+  <text x="430" y="288" text-anchor="middle" font-size="14" font-weight="600">平台后端</text>
+  <text x="430" y="302" text-anchor="middle" font-size="11" fill="#8b949e">调度中心 · 报告聚合</text>
+  <rect x="550" y="240" width="180" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="558" y1="241" x2="722" y2="241" stroke="rgba(255,255,255,0.25)"/>
+  <g stroke="#3fb950" stroke-width="1.4" opacity="0.9" fill="none"><rect x="628" y="252" width="24" height="20" rx="2"/><line x1="636" y1="252" x2="636" y2="272"/><line x1="644" y1="252" x2="644" y2="272"/><line x1="628" y1="258" x2="652" y2="258"/><line x1="628" y1="265" x2="652" y2="265"/></g>
+  <text x="640" y="288" text-anchor="middle" font-size="14" font-weight="600">Excel 导入解析</text>
+  <text x="640" y="302" text-anchor="middle" font-size="11" fill="#8b949e">一次性迁移 · 格式校验</text>
+  <!-- ===== Redis 容器内容 ===== -->
+  <ellipse cx="135" cy="458" rx="13" ry="4.5" fill="rgba(63,185,80,0.12)" stroke="rgba(63,185,80,0.6)"/>
+  <path d="M 122 458 L 122 472 A 13 4.5 0 0 0 148 472 L 148 458" fill="rgba(63,185,80,0.07)" stroke="rgba(63,185,80,0.6)"/>
+  <text x="162" y="466" font-size="13" font-weight="600" fill="#3fb950">Redis · 队列与缓存</text>
+  <text x="130" y="496" font-size="12" fill="#58a6ff" font-weight="600">queue:task</text>
+  <text x="230" y="496" font-size="12" fill="#8b949e">任务队列</text>
+  <text x="130" y="517" font-size="12" fill="#58a6ff" font-weight="600">run:{id}</text>
+  <text x="230" y="517" font-size="12" fill="#8b949e">状态 / 心跳 TTL</text>
+  <text x="130" y="538" font-size="12" fill="#58a6ff" font-weight="600">log:{id}</text>
+  <text x="230" y="538" font-size="12" fill="#8b949e">实时日志流</text>
+  <text x="130" y="559" font-size="12" fill="#58a6ff" font-weight="600">lock:sched</text>
+  <text x="230" y="559" font-size="12" fill="#8b949e">调度分布式锁</text>
+  <text x="130" y="580" font-size="12" fill="#58a6ff" font-weight="600">sess:{agent}</text>
+  <text x="230" y="580" font-size="12" fill="#8b949e">Agent 会话</text>
+  <text x="130" y="600" font-size="11" fill="#8b949e" opacity="0.8">亚毫秒读写 · TTL 自动过期</text>
+  <!-- ===== MySQL 容器内容 ===== -->
+  <ellipse cx="455" cy="458" rx="13" ry="4.5" fill="rgba(88,166,255,0.12)" stroke="rgba(88,166,255,0.6)"/>
+  <path d="M 442 458 L 442 472 A 13 4.5 0 0 0 468 472 L 468 458" fill="rgba(88,166,255,0.07)" stroke="rgba(88,166,255,0.6)"/>
+  <text x="482" y="466" font-size="13" font-weight="600" fill="#58a6ff">MySQL · 持久化</text>
+  <text x="450" y="496" font-size="12" fill="#bc8cff" font-weight="600">t_case</text>
+  <text x="540" y="496" font-size="12" fill="#8b949e">用例主表</text>
+  <text x="450" y="517" font-size="12" fill="#bc8cff" font-weight="600">t_step</text>
+  <text x="540" y="517" font-size="12" fill="#8b949e">步骤 / 断言</text>
+  <text x="450" y="538" font-size="12" fill="#bc8cff" font-weight="600">t_task</text>
+  <text x="540" y="538" font-size="12" fill="#8b949e">执行任务</text>
+  <text x="450" y="559" font-size="12" fill="#bc8cff" font-weight="600">t_record</text>
+  <text x="540" y="559" font-size="12" fill="#8b949e">结果明细</text>
+  <text x="450" y="580" font-size="12" fill="#bc8cff" font-weight="600">t_report</text>
+  <text x="540" y="580" font-size="12" fill="#8b949e">报告汇总</text>
+  <text x="450" y="601" font-size="12" fill="#bc8cff" font-weight="600">t_env</text>
+  <text x="540" y="601" font-size="12" fill="#8b949e">环境 / 项目</text>
+  <!-- ===== 对象存储容器内容 ===== -->
+  <path d="M 735 470 q -6 -14 8 -16 q 3 -10 15 -8 q 10 -8 18 0 q 12 -2 12 10 q 8 4 2 12 z" fill="rgba(188,140,255,0.10)" stroke="rgba(188,140,255,0.6)"/>
+  <text x="790" y="466" text-anchor="middle" font-size="13" font-weight="600" fill="#bc8cff">对象存储</text>
+  <text x="790" y="492" text-anchor="middle" font-size="11" fill="#8b949e">MinIO / OBS / S3</text>
+  <text x="790" y="520" text-anchor="middle" font-size="12" fill="#8b949e">截图 / 录像</text>
+  <text x="790" y="544" text-anchor="middle" font-size="12" fill="#8b949e">日志文件</text>
+  <text x="790" y="568" text-anchor="middle" font-size="12" fill="#8b949e">HTML 报告</text>
+  <text x="790" y="592" text-anchor="middle" font-size="12" fill="#8b949e">Excel 导出</text>
+  <text x="790" y="600" text-anchor="middle" font-size="11" fill="#8b949e" opacity="0.8">报告页签名 URL 直读</text>
+  <!-- ===== Runner 节点 ===== -->
+  <rect x="130" y="700" width="200" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="138" y1="701" x2="322" y2="701" stroke="rgba(255,255,255,0.25)"/>
+  <text x="230" y="731" text-anchor="middle" font-size="14" font-weight="600">接口 Runner</text>
+  <text x="230" y="749" text-anchor="middle" font-size="11" fill="#8b949e">HTTP / REST</text>
+  <rect x="350" y="700" width="200" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="358" y1="701" x2="542" y2="701" stroke="rgba(255,255,255,0.25)"/>
+  <text x="450" y="731" text-anchor="middle" font-size="14" font-weight="600">UI Runner</text>
+  <text x="450" y="749" text-anchor="middle" font-size="11" fill="#8b949e">Selenium / Playwright</text>
+  <rect x="570" y="700" width="200" height="70" rx="12" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)"/>
+  <line x1="578" y1="701" x2="762" y2="701" stroke="rgba(255,255,255,0.25)"/>
+  <text x="670" y="731" text-anchor="middle" font-size="14" font-weight="600">App Runner</text>
+  <text x="670" y="749" text-anchor="middle" font-size="11" fill="#8b949e">Appium / Device</text>
+  <g stroke="#f78166" stroke-width="1.6" opacity="0.9" fill="none"><line x1="152" y1="712" x2="166" y2="712"/><polyline points="160,706 166,712 160,718"/></g>
+  <g stroke="#f78166" stroke-width="1.6" opacity="0.9" fill="none"><rect x="372" y="705" width="26" height="20" rx="3"/><line x1="372" y1="711" x2="398" y2="711"/><circle cx="377" cy="708" r="1.2" fill="#f78166" stroke="none"/></g>
+  <g stroke="#f78166" stroke-width="1.6" opacity="0.9" fill="none"><rect x="588" y="703" width="15" height="24" rx="3"/><line x1="592" y1="724" x2="599" y2="724"/></g>
+  <!-- ===== 图例 + 迁移要点 ===== -->
+  <rect x="110" y="835" width="430" height="50" rx="12" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" data-graph-role="legend"/>
+  <text x="127" y="856" font-size="11" fill="#8b949e">图例</text>
+  <line x1="185" y1="853" x2="212" y2="853" stroke="#58a6ff" stroke-width="1.8" marker-end="url(#arr-blue)"/>
+  <text x="222" y="857" font-size="11" fill="#8b949e">数据流</text>
+  <line x1="300" y1="853" x2="327" y2="853" stroke="#f78166" stroke-width="1.8" marker-end="url(#arr-orange)"/>
+  <text x="337" y="857" font-size="11" fill="#8b949e">任务派发</text>
+  <line x1="185" y1="873" x2="212" y2="873" stroke="#3fb950" stroke-width="1.6" marker-end="url(#arr-green)"/>
+  <text x="222" y="877" font-size="11" fill="#8b949e">缓存读写</text>
+  <line x1="300" y1="873" x2="327" y2="873" stroke="#bc8cff" stroke-width="1.6" marker-end="url(#arr-purple)"/>
+  <text x="337" y="877" font-size="11" fill="#8b949e">Agent 会话</text>
+  <rect x="580" y="815" width="290" height="85" rx="12" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" data-graph-role="legend"/>
+  <text x="595" y="836" font-size="12" font-weight="600" fill="#58a6ff">迁移要点</text>
+  <text x="595" y="856" font-size="11" fill="#8b949e">1. Excel 一次性导入，后续平台内维护</text>
+  <text x="595" y="874" font-size="11" fill="#8b949e">2. 截图 / 日志 / 报告文件 → 对象存储</text>
+  <text x="595" y="892" font-size="11" fill="#8b949e">3. 执行状态与心跳 → Redis TTL 过期</text>
+</svg>

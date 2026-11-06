@@ -7,6 +7,7 @@
  * - 分帧逻辑就十几行，不值得为此引一个依赖。
  */
 import type { ChatEvent, ChatReq } from "../types";
+import { friendlyAgentError, isUserReadable } from "./errors";
 
 export interface SseHandle {
   /** 服务端 done 事件里的 session_id（回退用响应头 X-Session-Id） */
@@ -28,16 +29,32 @@ export async function postChatStream(
     headers,
     body: JSON.stringify(body),
     signal,
+  }).catch((e: unknown) => {
+    // 手动停止不是故障：原样上抛，由调用方按 AbortError 静默处理
+    if ((e as Error)?.name === "AbortError") throw e;
+    // 网络层失败（服务未起/断网）：不暴露端口与部署细节，技术定位留给控制台与留痕
+    throw new Error("智能助手服务暂时不可达，请稍后重试或联系管理员");
   });
   if (!resp.ok) {
-    // 流开始前的错误仍是统一 JSON 形状 {detail, code, trace_id}：取 detail 给用户看
-    let msg = `Agent 调用失败（HTTP ${resp.status}）`;
+    // 流开始前的错误仍是统一 JSON 形状 {detail, code, trace_id}：
+    // detail 面向用户才直出，技术性文案（异常原文/端口/内部服务名）按 code 翻译成可读提示
+    let msg = friendlyAgentError(resp.status >= 500 ? "internal_error" : undefined, "").msg;
+    let code = "";
+    let isJson = false;
     try {
       const j = await resp.json();
-      if (j?.detail) msg = String(j.detail);
-      if (j?.code === "unauthorized") msg = "Agent 网关鉴权失败：请在浏览器 localStorage 设置 agent_key 后重试";
-    } catch { /* 非 JSON 错误体，保留状态码文案 */ }
-    throw new Error(msg);
+      isJson = true;
+      code = String(j?.code || "");
+      const d = j?.detail ? String(j.detail) : "";
+      msg = isUserReadable(d) ? d : friendlyAgentError(code || undefined, d).msg;
+      if (code === "unauthorized") msg = "智能助手鉴权失败，请联系管理员检查接入配置";
+    } catch { /* 非 JSON 错误体 */ }
+    // 5xx 且非统一 JSON（如开发现代理解层报的错体）：几乎总是 Agent 服务本身掉了，
+    // “服务不可达”比“服务器内部错误”更贴近事实与用户可行动作
+    if (!isJson && resp.status >= 500) msg = "智能助手服务暂时不可达，请稍后重试或联系管理员";
+    const err = new Error(msg) as Error & { tech?: string };
+    err.tech = code;   // 随错误对象携带 code：错误气泡的详情区仍可展示
+    throw err;
   }
   const headerSession = resp.headers.get("x-session-id") || "";
   const reader = resp.body!.getReader();

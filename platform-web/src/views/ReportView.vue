@@ -387,7 +387,7 @@ h2{font-size:15px;margin:20px 0 8px;border-left:3px solid #409eff;padding-left:8
 <table><thead><tr><th>状态</th><th>用例</th><th>优先级</th><th>结果摘要</th><th>耗时</th></tr></thead><tbody>
 ${rows.map((r) => `<tr><td><span class="tag" style="background:${stColor(r.status)}">${esc(r.status)}</span></td><td><div class="mono">${esc(r.case_id)}</div><div>${esc(r.name)}</div></td><td>${esc(r.priority)}</td><td>${esc(r.summary || r.status)}</td><td>${durFmt(r.duration_ms)}</td></tr>`).join("")}
 </tbody></table>
-<div class="foot">由 interface-auto 测试平台导出</div>
+<div class="foot">由自动化测试平台导出</div>
 </body></html>`;
   const w = window.open("", "_blank");
   if (!w) { ElMessage.warning("浏览器拦截了新窗口，请允许弹出后重试"); return; }

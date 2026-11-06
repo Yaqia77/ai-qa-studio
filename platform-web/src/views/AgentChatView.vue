@@ -16,6 +16,7 @@ import { ElMessage, ElMessageBox, type UploadFile } from "element-plus";
 import { ArrowDown, Check, ChatLineSquare, Close, Connection, Delete, Document, MagicStick, Paperclip, Plus, Promotion, VideoPause } from "@element-plus/icons-vue";
 import { api } from "../api";
 import { postChatStream } from "../utils/sse";
+import { friendlyAgentError } from "../utils/errors";
 import StepCanvas from "../components/StepCanvas.vue";
 import JsonViewer from "../components/JsonViewer.vue";
 import type { ChatEvent, ChatPlanStep, ChatSessionInfo, GenerationDiff, Project } from "../types";
@@ -44,9 +45,11 @@ interface ChatMsg {
   // kind=ask
   question?: string;
   options?: string[];
-  // kind=error
+  // kind=error：msg 是用户可读文案，detail/code/traceId 收进「详情」折叠区供管理员排障
+  msg?: string;
   detail?: string;
   code?: string;
+  tech?: string;
   traceId?: string;
   // 用户气泡附带的附件名（仅展示用，历史恢复不重建）
   files?: string[];
@@ -387,13 +390,17 @@ function onEvent(v: SessionView, ev: ChatEvent) {
       };
       pushProc(v, { kind: "cite", text: ev.payload.title || ev.payload.kb_id });
       break;
-    case "error":
+    case "error": {
       flushTyping(v);
+      // 后端 detail 常带异常原文/端口/内部服务名：流内 error 事件统一翻译后可读展示，原文折叠
+      const fe = friendlyAgentError(ev.payload.code, ev.payload.detail);
       v.messages.push({
         id: ++msgSeq, role: "agent", kind: "error",
-        detail: ev.payload.detail, code: ev.payload.code, traceId: ev.payload.trace_id,
+        msg: fe.msg, detail: ev.payload.detail, code: ev.payload.code,
+        tech: fe.tech, traceId: ev.payload.trace_id,
       });
       break;
+    }
     case "done": {
       const newSid = ev.payload.session_id;
       if (newSid && v.sid !== newSid) {
@@ -473,9 +480,11 @@ async function runTurn(v: SessionView, message: string, patch?: { case_id: strin
     else if ((e as Error)?.name === "AbortError") {
       ElMessage.info("已停止本次生成");   // 手动停止不是故障，不补 error 气泡
     } else {
-      // 流开始前的失败仍是统一 JSON：收掉占位泡后补一条 error 气泡，SSE 帧内的 error 事件走 onEvent
+      // 流开始前的失败仍是统一 JSON：文案已在 sse/api 层翻译过，这里只补折叠用的技术原文
       flushTyping(v);
-      v.messages.push({ id: ++msgSeq, role: "agent", kind: "error", detail: (e as Error).message, code: "request_failed", traceId: "" });
+      const err = e as Error & { tech?: string };
+      const fe = friendlyAgentError(err.tech || "request_failed", err.message);
+      v.messages.push({ id: ++msgSeq, role: "agent", kind: "error", msg: fe.msg, code: err.tech || "request_failed", tech: fe.tech, detail: err.message, traceId: "" });
     }
   } finally {
     if (v.turnSeq !== seq) return;       // 已被强制推送接管：不碰新轮状态、不重复接发
@@ -697,12 +706,22 @@ onMounted(async () => {
               </div>
             </template>
 
-            <!-- 错误条 -->
+            <!-- 错误条：只展示用户可读文案；错误码/技术原文/trace 折叠给管理员 -->
             <template v-else>
               <div class="avatar avatar--err">!</div>
               <div class="err-bar">
-                <b>出错</b>（{{ m.code }}）：{{ m.detail }}
-                <span v-if="m.traceId" class="trace">trace {{ m.traceId }}</span>
+                <b>出错</b>：{{ m.msg || m.detail }}
+                <el-collapse v-if="m.code || m.tech || m.traceId" class="err-more">
+                  <el-collapse-item name="d">
+                    <template #title><span class="err-more-title">详情（供管理员排障）</span></template>
+                    <div class="err-tech">
+                      <div v-if="m.code">错误码：{{ m.code }}</div>
+                      <div v-if="m.tech">{{ m.tech }}</div>
+                      <div v-else-if="m.detail && m.detail !== m.msg">{{ m.detail }}</div>
+                      <div v-if="m.traceId">trace {{ m.traceId }}</div>
+                    </div>
+                  </el-collapse-item>
+                </el-collapse>
               </div>
             </template>
           </div>
@@ -871,6 +890,11 @@ onMounted(async () => {
   padding: 8px 12px; font-size: 12px; max-width: 78%;
 }
 .err-bar .trace { color: #909399; margin-left: 8px; }
+.err-more { border-top: none; }
+.err-more :deep(.el-collapse-item__header) { height: 24px; line-height: 24px; border-bottom: none; }
+.err-more :deep(.el-collapse-item__wrap) { border-bottom: none; background: transparent; }
+.err-more-title { font-size: 11px; color: #909399; }
+.err-tech { font-size: 11px; color: #909399; line-height: 1.7; word-break: break-all; }
 .activity { padding: 4px 16px; font-size: 12px; color: #e6a23c; background: #fdf6ec; border-top: 1px solid #f5dab1; }
 
 /* 等待发送队列（生成中发的消息排队，可强制推送/取消） */

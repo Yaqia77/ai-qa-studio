@@ -26,9 +26,9 @@ from core.context import load_config
 ROOT = Path(__file__).resolve().parent.parent
 
 app = FastAPI(
-    title="interface-auto 测试平台 API",
+    title="自动化测试平台 API",
     version="0.1.0",
-    description="Excel 驱动接口自动化框架的平台化后端：用例查询 / 执行调度 / 批次跟踪。",
+    description="Excel 驱动的一站式自动化测试平台后端：用例查询 / 执行调度 / 批次跟踪。",
 )
 
 # 开发期放开跨域；生产部署（Nginx 同域反代）后可收紧

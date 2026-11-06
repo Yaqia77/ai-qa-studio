@@ -12,7 +12,7 @@ import type { EnvInfo } from "./types";
 
 const route = useRoute();
 const router = useRouter();
-const title = computed(() => (route.meta.title as string) ?? "interface-auto");
+const title = computed(() => (route.meta.title as string) ?? "工作台");
 // 菜单选中态归属：/report 等二级页通过 meta.active 指定高亮的菜单项
 const activeMenu = computed(() => (route.meta.active as string) ?? route.path);
 // 登录页不带平台外壳（侧栏/顶栏）
@@ -56,7 +56,7 @@ function onUserCommand(cmd: string) {
     <el-aside width="232px" class="side">
       <div class="logo">
         <el-icon class="logo-mark"><MagicStick /></el-icon>
-        <span class="logo-text">Interface Auto</span>
+        <span class="logo-text">自动化测试平台</span>
       </div>
       <el-menu router :default-active="activeMenu" class="side-menu">
         <el-menu-item-group title="概览">
@@ -87,7 +87,7 @@ function onUserCommand(cmd: string) {
           <el-menu-item v-perm="'audit:view'" index="/audit"><el-icon><Lock /></el-icon><span>操作审计</span></el-menu-item>
         </el-menu-item-group>
       </el-menu>
-      <div class="side-foot">对接 FastAPI 后端 · Excel 为唯一用例载体</div>
+      <div class="side-foot">Excel 驱动 · 接口 / UI / App 统一自动化</div>
     </el-aside>
     <el-container>
       <el-header class="topbar">
