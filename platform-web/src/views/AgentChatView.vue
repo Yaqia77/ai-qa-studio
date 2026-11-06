@@ -753,7 +753,7 @@ onMounted(async () => {
                            :disabled="!modelOptions.length">
                   <el-option v-for="m in modelOptions" :key="m" :label="m" :value="m" />
                 </el-select>
-                <el-tooltip :disabled="webSearchSupported" content="服务端未放开联网总闸" placement="top">
+                <el-tooltip :disabled="webSearchSupported" content="当前模型网关不支持联网搜索，如需开启请更换支持搜索的网关并在服务端放开总闸" placement="top">
                   <button type="button" class="tool-toggle" :class="{ on: webSearch }"
                           :disabled="!webSearchSupported" @click="webSearch = !webSearch">
                     <el-icon><Connection /></el-icon>联网搜索
